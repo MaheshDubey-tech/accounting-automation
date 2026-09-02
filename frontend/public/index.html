@@ -1,0 +1,1035 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Accounting - Financial & Invoicing Portal</title>
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#2563eb">
+  <link rel="icon" href="/icons/icon-192.png" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/base.css">
+  <link rel="stylesheet" href="/css/components.css">
+  <link rel="stylesheet" href="/css/layout.css">
+  <link rel="stylesheet" href="/css/pages/dashboard.css">
+</head>
+<body>
+  <div class="app-layout">
+    <!-- Desktop Sidebar Navigation -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar__brand">
+        <div class="sidebar__brand-logo">A</div>
+        <div class="sidebar__brand-name">Accounting</div>
+      </div>
+
+      <nav class="sidebar__nav">
+        <a href="#dashboard" class="nav-link active" data-nav="dashboard">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+          <span>Dashboard</span>
+        </a>
+        <a href="#customers" class="nav-link" data-nav="customers">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+          <span>Customers</span>
+        </a>
+        <a href="#stock" class="nav-link" data-nav="stock">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+          <span>Stock Inventory</span>
+        </a>
+        <a href="#sales" class="nav-link" data-nav="sales">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          <span>Sales Entry</span>
+        </a>
+        <a href="#invoices" class="nav-link" data-nav="invoices">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+          <span>Invoices & Notices</span>
+        </a>
+        <a href="#payments" class="nav-link" data-nav="payments">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+          <span>Payments Ledger</span>
+        </a>
+        <a href="#ocr" class="nav-link" data-nav="ocr">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+          <span>AI Bill Scanner</span>
+        </a>
+        <a href="#reports" class="nav-link" data-nav="reports">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+          <span>Reports & Excel</span>
+        </a>
+        <a href="#users" class="nav-link admin-only" data-nav="users" style="display: none;">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+          <span>User Accounts</span>
+        </a>
+      </nav>
+
+      <div class="sidebar__footer">
+        <div class="user-badge">
+          <div class="user-badge__avatar js-user-avatar">A</div>
+          <div>
+            <div class="user-badge__name js-user-name">Admin</div>
+            <div class="user-badge__role js-user-role">Administrator</div>
+          </div>
+        </div>
+        <button class="btn btn--icon js-logout-btn" title="Logout">
+          <svg style="width: 18px; height: 18px;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-wrapper">
+      <!-- Top Sticky Header -->
+      <header class="top-header">
+        <div style="display: flex; align-items: center; gap: 1rem;">
+          <button class="btn btn--icon mobile-menu-btn" id="mobileMenuToggle" style="display: none;">
+            <svg style="width: 20px; height: 20px;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+          </button>
+          <h1 class="top-header__title" id="pageTitle">Dashboard</h1>
+        </div>
+
+        <div class="top-header__actions">
+          <button class="btn btn--secondary btn--sm" id="syncExcelTopBtn" title="Sync live data with Excel workbooks">
+            <svg style="width: 16px; height: 16px;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+            <span>Sync Excel</span>
+          </button>
+
+          <button class="theme-toggle" id="themeToggleBtn" title="Toggle Light/Dark Theme">
+            <svg id="themeIcon" style="width: 18px; height: 18px;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+          </button>
+        </div>
+      </header>
+
+      <!-- Dynamic Page Container -->
+      <div class="page-content">
+
+        <!-- ==========================================
+             1. DASHBOARD OVERVIEW SECTION
+             ========================================== -->
+        <section id="section-dashboard" class="app-section active">
+          <!-- Quick Action Buttons -->
+          <div class="quick-actions-bar">
+            <button class="quick-btn" onclick="App.navigateTo('sales');">
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
+              <span>New Sale Entry</span>
+            </button>
+            <button class="quick-btn" onclick="App.openCustomerModal();">
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
+              <span>Add Customer</span>
+            </button>
+            <button class="quick-btn" onclick="App.openStockModal();">
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+              <span>Add Stock Item</span>
+            </button>
+            <button class="quick-btn" onclick="App.navigateTo('ocr');">
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/></svg>
+              <span>Scan Bill (AI OCR)</span>
+            </button>
+          </div>
+
+          <!-- 3-Day Notice Reminder Banner -->
+          <div class="notice-alert-banner" id="dashNoticeBanner" style="display: none;">
+            <div class="notice-alert-banner__content">
+              <div class="notice-alert-banner__icon">🔔</div>
+              <div>
+                <div class="notice-alert-banner__title" id="dashNoticeTitle">Invoices Due in ≤ 3 Days</div>
+                <div class="notice-alert-banner__desc" id="dashNoticeDesc">Automatic notice tracking active.</div>
+              </div>
+            </div>
+            <button class="btn btn--secondary btn--sm" onclick="App.navigateTo('invoices');">View Invoices</button>
+          </div>
+
+          <!-- KPI Cards Grid -->
+          <div class="kpi-grid">
+            <div class="kpi-card">
+              <span class="kpi-card__label">Total Sales Revenue</span>
+              <span class="kpi-card__value" id="kpiTotalSales">₹0.00</span>
+              <span class="kpi-card__sub" id="kpiSalesCount">0 Transactions</span>
+            </div>
+            <div class="kpi-card kpi-card--danger">
+              <span class="kpi-card__label">Outstanding Balance</span>
+              <span class="kpi-card__value" id="kpiOutstanding">₹0.00</span>
+              <span class="kpi-card__sub" id="kpiPendingCount">0 Pending Invoices</span>
+            </div>
+            <div class="kpi-card kpi-card--success">
+              <span class="kpi-card__label">Total Payments Received</span>
+              <span class="kpi-card__value" id="kpiCollected">₹0.00</span>
+              <span class="kpi-card__sub" id="kpiMonthCollected">₹0.00 This Month</span>
+            </div>
+            <div class="kpi-card kpi-card--warning">
+              <span class="kpi-card__label">Overdue Invoices</span>
+              <span class="kpi-card__value" id="kpiOverdueAmount">₹0.00</span>
+              <span class="kpi-card__sub" id="kpiOverdueCount">0 Invoices Past Due</span>
+            </div>
+          </div>
+
+          <!-- Two-Column Activity Feeds -->
+          <div class="dashboard-grid">
+            <div class="card">
+              <div class="card__header">
+                <h3 class="card__title">Recent Sales</h3>
+                <button class="btn btn--secondary btn--sm" onclick="App.navigateTo('sales');">View All</button>
+              </div>
+              <div class="table-container">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>Sale Date</th>
+                      <th>Customer</th>
+                      <th>Item</th>
+                      <th>Units</th>
+                      <th>Total</th>
+                    </tr>
+                  </thead>
+                  <tbody id="dashSalesBody">
+                    <tr><td colspan="5" style="text-align: center; color: var(--text-muted);">No sales recorded yet.</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card__header">
+                <h3 class="card__title">Stock Inventory Alerts</h3>
+                <button class="btn btn--secondary btn--sm" onclick="App.navigateTo('stock');">Manage</button>
+              </div>
+              <div class="table-container">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>Item</th>
+                      <th>Available</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody id="dashStockBody">
+                    <tr><td colspan="3" style="text-align: center; color: var(--text-muted);">No low-stock warnings.</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==========================================
+             2. CUSTOMERS DIRECTORY SECTION
+             ========================================== -->
+        <section id="section-customers" class="app-section">
+          <div class="toolbar">
+            <div class="toolbar__search">
+              <input type="text" id="customerSearchInput" class="form-control" placeholder="Search customers by name, phone...">
+            </div>
+            <button class="btn btn--primary" onclick="App.openCustomerModal();">
+              <svg style="width: 18px; height: 18px;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
+              <span>Add Customer</span>
+            </button>
+          </div>
+
+          <div class="card">
+            <div class="table-container">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Customer Name</th>
+                    <th>Contact Info</th>
+                    <th>Payment Terms</th>
+                    <th>Total Sales</th>
+                    <th>Total Invoiced</th>
+                    <th>Total Paid</th>
+                    <th>Outstanding</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="customerTableBody">
+                  <tr><td colspan="8" style="text-align: center; color: var(--text-muted);">Loading customers directory...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==========================================
+             3. STOCK INVENTORY SECTION
+             ========================================== -->
+        <section id="section-stock" class="app-section">
+          <div class="toolbar">
+            <div class="toolbar__search">
+              <input type="text" id="stockSearchInput" class="form-control" placeholder="Search stock items...">
+            </div>
+            <button class="btn btn--primary" onclick="App.openStockModal();">
+              <svg style="width: 18px; height: 18px;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+              <span>Add Stock Item</span>
+            </button>
+          </div>
+
+          <div class="card">
+            <div class="table-container">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Item Description</th>
+                    <th>Unit Price</th>
+                    <th>In Stock</th>
+                    <th>Units Sold</th>
+                    <th>Inventory Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="stockTableBody">
+                  <tr><td colspan="6" style="text-align: center; color: var(--text-muted);">Loading inventory...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==========================================
+             4. SALES ENTRY SECTION
+             ========================================== -->
+        <section id="section-sales" class="app-section">
+          <div class="card" style="margin-bottom: 1.5rem;">
+            <div class="card__header">
+              <h3 class="card__title">Create New Sale Transaction</h3>
+            </div>
+            <form id="newSaleForm">
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label" for="saleCustomerSelect">Select Customer *</label>
+                  <select id="saleCustomerSelect" class="form-control" required>
+                    <option value="">-- Choose Customer --</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="saleItemSelect">Select Stock Item *</label>
+                  <select id="saleItemSelect" class="form-control" required>
+                    <option value="">-- Choose Item --</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label" for="saleUnitsInput">Units Sold *</label>
+                  <input type="number" id="saleUnitsInput" class="form-control" min="1" value="1" required>
+                  <small id="saleStockAvailableHint" style="color: var(--text-muted); font-size: 0.75rem;"></small>
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="saleRateInput">Unit Rate (₹) *</label>
+                  <input type="number" id="saleRateInput" class="form-control" step="0.01" min="0" required>
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="saleDateInput">Sale Date *</label>
+                  <input type="date" id="saleDateInput" class="form-control" required>
+                </div>
+              </div>
+
+              <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border-color);">
+                <div style="font-size: 1.1rem; font-weight: 700; color: var(--text-primary);">
+                  Total Sale Amount: <span id="saleCalculatedTotal" style="color: var(--primary);">₹0.00</span>
+                </div>
+                <button type="submit" id="saveSaleBtn" class="btn btn--primary">
+                  Record Sale & Auto-Generate Invoice
+                </button>
+              </div>
+            </form>
+          </div>
+
+          <!-- Sales History Ledger -->
+          <div class="card">
+            <div class="card__header">
+              <h3 class="card__title">Sales Ledger</h3>
+              <input type="text" id="salesSearchInput" class="form-control" placeholder="Search sales..." style="max-width: 250px;">
+            </div>
+            <div class="table-container">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Sale #</th>
+                    <th>Date</th>
+                    <th>Customer</th>
+                    <th>Item</th>
+                    <th>Units</th>
+                    <th>Rate</th>
+                    <th>Total</th>
+                    <th>Linked Invoice</th>
+                    <th>Invoice Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="salesTableBody">
+                  <tr><td colspan="10" style="text-align: center; color: var(--text-muted);">Loading sales ledger...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==========================================
+             5. INVOICES & NOTICES SECTION
+             ========================================== -->
+        <section id="section-invoices" class="app-section">
+          <!-- Filter Tabs -->
+          <div class="filter-tabs">
+            <button class="filter-tab active" data-invoice-filter="all">All Invoices</button>
+            <button class="filter-tab" data-invoice-filter="pending">Pending</button>
+            <button class="filter-tab" data-invoice-filter="overdue">Overdue</button>
+            <button class="filter-tab" data-invoice-filter="paid">Paid</button>
+          </div>
+
+          <div class="card" style="margin-bottom: 1.5rem;">
+            <div class="card__header">
+              <h3 class="card__title">Invoices Directory</h3>
+              <div style="display: flex; gap: 0.5rem;">
+                <button class="btn btn--secondary btn--sm" id="runCronCheckBtn" title="Run 3-day notice scan now">
+                  <span>Run Notice Check</span>
+                </button>
+              </div>
+            </div>
+            <div class="table-container">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Invoice #</th>
+                    <th>Customer</th>
+                    <th>Invoice Amount</th>
+                    <th>Paid Amount</th>
+                    <th>Balance Due</th>
+                    <th>Due Date</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="invoiceTableBody">
+                  <tr><td colspan="8" style="text-align: center; color: var(--text-muted);">Loading invoices...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- 3-Day Notice History Log -->
+          <div class="card">
+            <div class="card__header">
+              <h3 class="card__title">3-Day Notice Reminder Tracker Log</h3>
+            </div>
+            <div class="table-container">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Reminder Date</th>
+                    <th>Customer</th>
+                    <th>Invoice #</th>
+                    <th>Due Date</th>
+                    <th>Amount</th>
+                    <th>Notice Message</th>
+                  </tr>
+                </thead>
+                <tbody id="remindersTableBody">
+                  <tr><td colspan="6" style="text-align: center; color: var(--text-muted);">No reminders logged yet.</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==========================================
+             6. PAYMENTS LEDGER SECTION
+             ========================================== -->
+        <section id="section-payments" class="app-section">
+          <div class="toolbar">
+            <div class="toolbar__search">
+              <input type="text" id="paymentSearchInput" class="form-control" placeholder="Search payments by customer or note...">
+            </div>
+            <button class="btn btn--primary" onclick="App.openPaymentModal();">
+              <svg style="width: 18px; height: 18px;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
+              <span>Record Payment</span>
+            </button>
+          </div>
+
+          <div class="card">
+            <div class="table-container">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Receipt #</th>
+                    <th>Payment Date</th>
+                    <th>Customer</th>
+                    <th>Invoice #</th>
+                    <th>Amount Paid</th>
+                    <th>Payment Mode</th>
+                    <th>Notes / Ref</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="paymentTableBody">
+                  <tr><td colspan="8" style="text-align: center; color: var(--text-muted);">Loading payments ledger...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==========================================
+             7. AI BILL & INVOICE OCR SCANNER SECTION
+             ========================================== -->
+        <section id="section-ocr" class="app-section">
+          <div class="ocr-scanner-wrapper">
+            <div class="card">
+              <div class="card__header">
+                <div>
+                  <h3 class="card__title">Intelligent Bill & Invoice Scanner (AI OCR)</h3>
+                  <p style="font-size: 0.825rem; color: var(--text-secondary); margin-top: 0.25rem;">
+                    Automatically reads, parses line items, vendors, taxes, dates, and amounts from any physical bill or digital invoice with user confirmation.
+                  </p>
+                </div>
+              </div>
+
+              <!-- Scanner Input Modes -->
+              <div class="ocr-toolbar-tabs">
+                <button type="button" class="ocr-mode-btn active" id="btnModeUpload">
+                  <svg style="width: 16px; height: 16px;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                  <span>Upload / Drag & Drop</span>
+                </button>
+                <button type="button" class="ocr-mode-btn" id="btnModeCamera">
+                  <svg style="width: 16px; height: 16px;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                  <span>Live Camera Scan</span>
+                </button>
+                <button type="button" class="ocr-mode-btn" id="btnModePaste" title="Or press Ctrl+V / Cmd+V anywhere">
+                  <svg style="width: 16px; height: 16px;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                  <span>Paste from Clipboard (Ctrl+V)</span>
+                </button>
+              </div>
+
+              <!-- Drag and Drop Dropzone -->
+              <div class="ocr-dropzone" id="ocrDropzone">
+                <div class="ocr-dropzone__icon">
+                  <svg style="width: 36px; height: 36px;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+                </div>
+                <div>
+                  <h4 style="font-size: 1.1rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.25rem;">
+                    Drop Bill or Invoice Image Here, or Click to Browse
+                  </h4>
+                  <p style="font-size: 0.85rem; color: var(--text-secondary);">
+                    Supports PNG, JPG, JPEG, WebP receipts, tax invoices, and purchase bills.
+                  </p>
+                </div>
+                <input type="file" id="ocrFileInput" accept="image/*" style="display: none;">
+
+                <!-- Quick Sample Invoices for Instant Demonstration -->
+                <div class="ocr-samples-bar" onclick="event.stopPropagation();">
+                  <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">Quick Test Samples:</span>
+                  <button type="button" class="sample-chip" onclick="App.loadSampleBill('tech');">SaaS / Cloud Invoice</button>
+                  <button type="button" class="sample-chip" onclick="App.loadSampleBill('supplies');">Office Supplies Bill</button>
+                  <button type="button" class="sample-chip" onclick="App.loadSampleBill('hardware');">Hardware Materials Bill</button>
+                </div>
+              </div>
+
+              <!-- Scanning Progress Animation -->
+              <div class="ocr-progress-box" id="ocrProgressWrapper" style="display: none;">
+                <div style="display: flex; align-items: center; justify-content: space-between;">
+                  <span id="ocrProgressStatus" style="font-size: 0.95rem; font-weight: 700; color: var(--text-primary);">Processing bill...</span>
+                  <span class="spinner"></span>
+                </div>
+                <div class="scan-steps-indicator">
+                  <div class="scan-step active" id="scanStep1">
+                    <div class="scan-step__circle">1</div>
+                    <span>Preprocess</span>
+                  </div>
+                  <div class="scan-step" id="scanStep2">
+                    <div class="scan-step__circle">2</div>
+                    <span>OCR Recognition</span>
+                  </div>
+                  <div class="scan-step" id="scanStep3">
+                    <div class="scan-step__circle">3</div>
+                    <span>Field Extraction</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Side-by-Side Interactive Verification & Confirmation Workspace -->
+              <div class="ocr-preview-grid" id="ocrReviewGrid" style="display: none;">
+                <!-- Left: Visual Document Viewer & Raw Text -->
+                <div class="ocr-viewer-panel">
+                  <div style="display: flex; align-items: center; justify-content: space-between;">
+                    <h4 style="font-size: 0.95rem; font-weight: 700;">Document Preview</h4>
+                    <span class="confidence-badge" id="ocrConfidenceBadge">98% High Accuracy</span>
+                  </div>
+
+                  <div class="ocr-image-container" id="ocrImageContainer">
+                    <img id="ocrImagePreview" class="ocr-image-preview" src="" alt="Scanned Document">
+                  </div>
+
+                  <div class="ocr-viewer-tools">
+                    <div style="display: flex; gap: 0.35rem;">
+                      <button type="button" class="btn btn--secondary btn--sm" id="btnZoomIn" title="Zoom In">🔍 +</button>
+                      <button type="button" class="btn btn--secondary btn--sm" id="btnZoomOut" title="Zoom Out">🔍 -</button>
+                      <button type="button" class="btn btn--secondary btn--sm" id="btnZoomReset" title="Reset Zoom">↺</button>
+                    </div>
+                    <button type="button" class="btn btn--secondary btn--sm" id="btnToggleRawText">
+                      <span>Inspect Raw OCR Text</span>
+                    </button>
+                  </div>
+
+                  <!-- Collapsible Raw OCR Text Box -->
+                  <div id="rawTextWrapper" style="display: none; margin-top: 0.5rem;">
+                    <textarea id="ocrRawText" class="form-control" rows="6" readonly style="font-family: monospace; font-size: 0.75rem; background: var(--bg-surface-elevated);"></textarea>
+                  </div>
+                </div>
+
+                <!-- Right: Fully Editable Verification & Confirmation Form -->
+                <div class="ocr-form-panel">
+                  <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
+                    <div>
+                      <h4 style="font-size: 1.05rem; font-weight: 800;">Review & Confirm Details</h4>
+                      <p style="font-size: 0.8rem; color: var(--text-secondary);">Verify extracted fields and edit any details before saving.</p>
+                    </div>
+                  </div>
+
+                  <form id="ocrConfirmationForm">
+                    <!-- Document Classification -->
+                    <div class="doc-type-toggle">
+                      <button type="button" class="doc-type-opt active" id="docTypeSaleBtn" onclick="App.setScanDocType('sale');">Customer Sales Invoice</button>
+                      <button type="button" class="doc-type-opt" id="docTypeExpenseBtn" onclick="App.setScanDocType('expense');">Vendor Purchase / Expense</button>
+                    </div>
+
+                    <div class="form-row">
+                      <div class="form-group">
+                        <label class="form-label" for="ocrCustomerInput">Customer / Vendor Name *</label>
+                        <input type="text" id="ocrCustomerInput" class="form-control" required placeholder="e.g. Apex Technologies">
+                      </div>
+                      <div class="form-group">
+                        <label class="form-label" for="ocrContactInput">Contact / Phone / Email</label>
+                        <input type="text" id="ocrContactInput" class="form-control" placeholder="+91 9876543210 / contact@domain.com">
+                      </div>
+                    </div>
+
+                    <div class="form-row">
+                      <div class="form-group">
+                        <label class="form-label" for="ocrBillNumberInput">Bill / Invoice #</label>
+                        <input type="text" id="ocrBillNumberInput" class="form-control" placeholder="INV-2026-001">
+                      </div>
+                      <div class="form-group">
+                        <label class="form-label" for="ocrCategorySelect">Category</label>
+                        <select id="ocrCategorySelect" class="form-control">
+                          <option value="General Supplies">General Supplies</option>
+                          <option value="Office Supplies">Office Supplies</option>
+                          <option value="Software & Tech">Software & Tech</option>
+                          <option value="Utilities">Utilities & Power</option>
+                          <option value="Professional Services">Professional Services</option>
+                          <option value="Travel & Transportation">Travel & Transportation</option>
+                          <option value="Inventory Purchase">Inventory Purchase</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div class="form-row">
+                      <div class="form-group">
+                        <label class="form-label" for="ocrDateInput">Issue / Bill Date *</label>
+                        <input type="date" id="ocrDateInput" class="form-control" required>
+                      </div>
+                      <div class="form-group">
+                        <label class="form-label" for="ocrDueDateInput">Due Date *</label>
+                        <input type="date" id="ocrDueDateInput" class="form-control" required>
+                        <div class="quick-terms-group">
+                          <span class="term-pill" onclick="App.setQuickDueDate(15);">Net 15</span>
+                          <span class="term-pill" onclick="App.setQuickDueDate(30);">Net 30</span>
+                          <span class="term-pill" onclick="App.setQuickDueDate(60);">Net 60</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Dynamic Line Items Breakdown Table -->
+                    <div style="margin-top: 1.25rem; margin-bottom: 0.5rem; display: flex; align-items: center; justify-content: space-between;">
+                      <label class="form-label" style="margin-bottom: 0;">Line Items Breakdown</label>
+                      <button type="button" class="btn btn--secondary btn--sm" onclick="App.addOCRLineItem();">+ Add Item</button>
+                    </div>
+
+                    <table class="line-items-table">
+                      <thead>
+                        <tr>
+                          <th>Description</th>
+                          <th style="width: 70px;">Qty</th>
+                          <th style="width: 110px;">Unit Price (₹)</th>
+                          <th style="width: 110px;">Line Total (₹)</th>
+                          <th style="width: 40px;"></th>
+                        </tr>
+                      </thead>
+                      <tbody id="ocrLineItemsBody">
+                        <!-- Dynamically populated rows -->
+                      </tbody>
+                    </table>
+
+                    <!-- Financial Summary Breakdown Card -->
+                    <div class="financial-summary-card">
+                      <div class="summary-row">
+                        <span>Subtotal:</span>
+                        <span id="ocrSubtotalDisplay">₹0.00</span>
+                      </div>
+                      <div class="summary-row" style="align-items: center;">
+                        <span style="display: flex; align-items: center; gap: 0.5rem;">
+                          Tax Rate (%):
+                          <input type="number" id="ocrTaxRateInput" style="width: 60px; padding: 0.2rem 0.4rem; font-size: 0.8rem; background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-primary);" value="0" min="0" step="0.5">
+                        </span>
+                        <span id="ocrTaxAmountDisplay">₹0.00</span>
+                      </div>
+                      <div class="summary-row" style="align-items: center;">
+                        <span style="display: flex; align-items: center; gap: 0.5rem;">
+                          Discount (₹):
+                          <input type="number" id="ocrDiscountInput" style="width: 80px; padding: 0.2rem 0.4rem; font-size: 0.8rem; background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-primary);" value="0" min="0" step="0.01">
+                        </span>
+                        <span id="ocrDiscountDisplay">-₹0.00</span>
+                      </div>
+                      <div class="summary-row total-highlight">
+                        <span>Grand Total:</span>
+                        <span id="ocrGrandTotalDisplay" style="color: var(--primary);">₹0.00</span>
+                      </div>
+                    </div>
+
+                    <!-- Payment Status & Settlement -->
+                    <div class="form-row">
+                      <div class="form-group">
+                        <label class="form-label" for="ocrPaymentStatusSelect">Payment Status</label>
+                        <select id="ocrPaymentStatusSelect" class="form-control">
+                          <option value="pending">Pending / Unpaid (Record Invoice)</option>
+                          <option value="paid">Paid in Full (Create Receipt)</option>
+                        </select>
+                      </div>
+                      <div class="form-group" id="ocrPaymentModeGroup" style="display: none;">
+                        <label class="form-label" for="ocrPaymentModeSelect">Payment Mode</label>
+                        <select id="ocrPaymentModeSelect" class="form-control">
+                          <option value="Bank Transfer">Bank Transfer (NEFT/RTGS)</option>
+                          <option value="UPI">UPI / QR</option>
+                          <option value="Cash">Cash</option>
+                          <option value="Credit/Debit Card">Credit/Debit Card</option>
+                          <option value="Cheque">Cheque</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div style="display: flex; gap: 0.75rem; margin-top: 1.5rem; flex-wrap: wrap;">
+                      <button type="submit" id="ocrConfirmSaveBtn" class="btn btn--primary" style="flex: 2; min-width: 200px;">
+                        <svg style="width: 18px; height: 18px;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                        <span>Confirm & Save to Accounting Ledger</span>
+                      </button>
+                      <button type="button" class="btn btn--secondary" onclick="App.openPrintSlipModal();" title="Print clean invoice voucher">
+                        <svg style="width: 16px; height: 16px;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                        <span>Print Slip</span>
+                      </button>
+                      <button type="button" class="btn btn--secondary" onclick="App.exportScanJSON();" title="Export Extracted JSON">
+                        <svg style="width: 16px; height: 16px;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                        <span>JSON</span>
+                      </button>
+                      <button type="button" class="btn btn--secondary" onclick="App.resetOCRView();" title="Scan Another Bill">
+                        <span>Reset</span>
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
+
+            <!-- Scanned Bills Session History -->
+            <div class="card" style="margin-top: 1.5rem;">
+              <div class="card__header">
+                <h3 class="card__title">Recent Scanned Documents History</h3>
+                <button type="button" class="btn btn--secondary btn--sm" onclick="App.clearScanHistory();">Clear History</button>
+              </div>
+              <div class="table-container">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>Time</th>
+                      <th>Document</th>
+                      <th>Entity</th>
+                      <th>Invoice #</th>
+                      <th>Date</th>
+                      <th>Total Amount</th>
+                      <th>Status</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody id="ocrHistoryTableBody">
+                    <tr><td colspan="8" style="text-align: center; color: var(--text-muted);">No documents scanned in this session yet.</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==========================================
+             8. REPORTS & EXCEL EXPORT SECTION
+             ========================================== -->
+        <section id="section-reports" class="app-section">
+          <div class="card" style="margin-bottom: 1.5rem;">
+            <div class="card__header">
+              <h3 class="card__title">Live Excel Spreadsheet Reports</h3>
+              <button class="btn btn--primary btn--sm" id="syncExcelBtn">
+                <svg style="width: 16px; height: 16px;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                <span>Synchronize All Workbooks</span>
+              </button>
+            </div>
+            <p style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 1rem;">
+              The system automatically writes every sale, invoice, and payment into live Excel spreadsheets using <code>ExcelJS</code>. You can download the latest multi-sheet workbooks below at any time.
+            </p>
+
+            <div class="download-card">
+              <div class="download-card__info">
+                <h4>📥 Lifetime Master Accounting Workbook</h4>
+                <p>Complete multi-sheet file containing: Summary KPI Sheet, Customers Directory, Stock Inventory, Sales Ledger, Invoices & Due Dates, Payments Ledger.</p>
+              </div>
+              <button class="btn btn--secondary" onclick="App.downloadLifetimeExcel();">Download Master Report</button>
+            </div>
+
+            <div class="download-card">
+              <div class="download-card__info">
+                <h4>📥 Current Monthly Report Workbook</h4>
+                <p>Filtered accounting sheet for the current billing month.</p>
+              </div>
+              <button class="btn btn--secondary" onclick="App.downloadMonthlyExcel();">Download Monthly Report</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==========================================
+             9. USER MANAGEMENT SECTION (ADMIN ONLY)
+             ========================================== -->
+        <section id="section-users" class="app-section admin-only" style="display: none;">
+          <div class="toolbar">
+            <h3 style="font-size: 1.1rem; font-weight: 700;">Accountant & Admin Accounts</h3>
+            <button class="btn btn--primary" onclick="App.openUserModal();">
+              <svg style="width: 18px; height: 18px;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
+              <span>Add User</span>
+            </button>
+          </div>
+
+          <div class="card">
+            <div class="table-container">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Username</th>
+                    <th>Role</th>
+                    <th>Created At</th>
+                  </tr>
+                </thead>
+                <tbody id="userTableBody">
+                  <tr><td colspan="3" style="text-align: center; color: var(--text-muted);">Loading users...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- ==========================================
+       MODALS
+       ========================================== -->
+
+  <!-- Live Camera Scanner Modal -->
+  <div class="modal-overlay" id="modalCamera">
+    <div class="modal-dialog" style="max-width: 600px;">
+      <div class="modal-header">
+        <h3 class="modal-title">Live Camera Bill Scanner</h3>
+        <button class="btn btn--icon" onclick="App.closeCameraModal();">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="camera-viewfinder">
+          <video id="cameraVideo" autoplay playsinline></video>
+          <div class="camera-guide-box"></div>
+          <div class="camera-laser-line"></div>
+          <canvas id="cameraCanvas" style="display: none;"></canvas>
+        </div>
+        <div class="camera-controls">
+          <button type="button" class="btn btn--secondary btn--sm" id="btnSwitchCamera" onclick="App.switchCamera();">
+            <svg style="width: 16px; height: 16px;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+            <span>Flip Camera</span>
+          </button>
+          <button type="button" class="shutter-btn" id="btnCapturePhoto" onclick="App.captureCameraPhoto();" title="Capture Bill Photo">
+            <div style="width: 48px; height: 48px; border-radius: 50%; background: var(--primary);"></div>
+          </button>
+          <button type="button" class="btn btn--secondary btn--sm" onclick="App.closeCameraModal();">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Customer Modal -->
+  <div class="modal-overlay" id="modalCustomer">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 class="modal-title" id="modalCustomerTitle">Add New Customer</h3>
+        <button class="btn btn--icon" data-modal-close>&times;</button>
+      </div>
+      <form id="customerForm">
+        <input type="hidden" id="customerIdInput">
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label" for="customerNameInput">Customer Name *</label>
+            <input type="text" id="customerNameInput" class="form-control" placeholder="e.g. Acme Corp" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="customerContactInput">Contact Info / Email / Phone</label>
+            <textarea id="customerContactInput" class="form-control" rows="2" placeholder="contact@acme.com, +91 9876543210"></textarea>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="customerTermsInput">Billing Terms (Days) *</label>
+            <input type="number" id="customerTermsInput" class="form-control" min="0" value="30" required>
+            <small style="color: var(--text-muted); font-size: 0.75rem;">Due date will automatically be set to Sale Date + Billing Terms.</small>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn--secondary" data-modal-close>Cancel</button>
+          <button type="submit" id="customerSaveBtn" class="btn btn--primary">Save Customer</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Stock Item Modal -->
+  <div class="modal-overlay" id="modalStock">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 class="modal-title" id="modalStockTitle">Add Stock Item</h3>
+        <button class="btn btn--icon" data-modal-close>&times;</button>
+      </div>
+      <form id="stockForm">
+        <input type="hidden" id="stockIdInput">
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label" for="stockNameInput">Item Name *</label>
+            <input type="text" id="stockNameInput" class="form-control" placeholder="e.g. Thermal Paper Rolls" required>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="stockQtyInput">Available Quantity *</label>
+              <input type="number" id="stockQtyInput" class="form-control" min="0" value="100" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="stockPriceInput">Unit Price (₹) *</label>
+              <input type="number" id="stockPriceInput" class="form-control" step="0.01" min="0" value="0.00" required>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn--secondary" data-modal-close>Cancel</button>
+          <button type="submit" id="stockSaveBtn" class="btn btn--primary">Save Item</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Payment Modal -->
+  <div class="modal-overlay" id="modalPayment">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 class="modal-title">Record Payment Receipt</h3>
+        <button class="btn btn--icon" data-modal-close>&times;</button>
+      </div>
+      <form id="paymentForm">
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label" for="paymentInvoiceSelect">Select Invoice *</label>
+            <select id="paymentInvoiceSelect" class="form-control" required>
+              <option value="">-- Choose Pending / Overdue Invoice --</option>
+            </select>
+            <small id="paymentInvoiceDetailsPreview" style="color: var(--text-muted); font-size: 0.75rem;"></small>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="paymentAmountInput">Amount Paid (₹) *</label>
+              <input type="number" id="paymentAmountInput" class="form-control" step="0.01" min="0.01" placeholder="0.00" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="paymentDateInput">Payment Date *</label>
+              <input type="date" id="paymentDateInput" class="form-control" required>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="paymentModeSelect">Payment Mode *</label>
+            <select id="paymentModeSelect" class="form-control" required>
+              <option value="Bank Transfer">Bank Transfer (NEFT/RTGS/IMPS)</option>
+              <option value="UPI">UPI / QR</option>
+              <option value="Cheque">Cheque</option>
+              <option value="Cash">Cash</option>
+              <option value="Credit/Debit Card">Credit/Debit Card</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="paymentNotesInput">Transaction Ref / Notes</label>
+            <input type="text" id="paymentNotesInput" class="form-control" placeholder="e.g. UTR #1234567890">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn--secondary" data-modal-close>Cancel</button>
+          <button type="submit" id="paymentSaveBtn" class="btn btn--primary">Record Payment</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Create User Modal (Admin Only) -->
+  <div class="modal-overlay" id="modalUser">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 class="modal-title">Create User Account</h3>
+        <button class="btn btn--icon" data-modal-close>&times;</button>
+      </div>
+      <form id="userForm">
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label" for="userUsernameInput">Username *</label>
+            <input type="text" id="userUsernameInput" class="form-control" placeholder="e.g. john_doe" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="userPasswordInput">Password *</label>
+            <input type="password" id="userPasswordInput" class="form-control" placeholder="••••••••" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="userRoleSelect">Role *</label>
+            <select id="userRoleSelect" class="form-control" required>
+              <option value="accountant">Accountant</option>
+              <option value="admin">Administrator</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn--secondary" data-modal-close>Cancel</button>
+          <button type="submit" id="userSaveBtn" class="btn btn--primary">Create User</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Invoice Detail / Print Modal -->
+  <div class="modal-overlay" id="modalInvoiceDetail">
+    <div class="modal-dialog" style="max-width: 650px;">
+      <div class="modal-header">
+        <h3 class="modal-title" id="modalInvoiceDetailTitle">Invoice Details</h3>
+        <button class="btn btn--icon" data-modal-close>&times;</button>
+      </div>
+      <div class="modal-body" id="modalInvoiceDetailBody">
+        <!-- Dynamically rendered -->
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn--secondary" onclick="App.printCurrentModal();">
+          <svg style="width: 16px; height: 16px;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+          <span>Print Voucher</span>
+        </button>
+        <button type="button" class="btn btn--secondary" data-modal-close>Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="/js/api.js"></script>
+  <script src="/js/auth.js"></script>
+  <script src="/js/components/modal.js"></script>
+  <script src="/js/components/toast.js"></script>
+  <script src="/js/pwa.js"></script>
+  <script src="/js/pages/app.js"></script>
+</body>
+</html>

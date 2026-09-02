@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login - Accounting Portal</title>
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#2563eb">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/base.css">
+  <link rel="stylesheet" href="/css/components.css">
+  <link rel="stylesheet" href="/css/pages/login.css">
+</head>
+<body>
+  <div class="login-wrapper">
+    <div class="login-card">
+      <div class="login-brand">
+        <div class="login-brand__logo">A</div>
+        <h1 class="login-brand__title">Accounting</h1>
+        <p class="login-brand__subtitle" id="formSubtitle">Secure Enterprise Accounting Portal</p>
+      </div>
+
+      <!-- Initial Admin Setup Notice (Shown only when 0 users exist) -->
+      <div class="setup-banner" id="setupBanner" style="display: none;">
+        <span class="setup-banner__badge">Initial Setup</span>
+        <p>No user accounts exist yet. Create the primary <strong>Administrator</strong> account below to begin.</p>
+      </div>
+
+      <form id="authForm" class="login-form">
+        <div class="form-group">
+          <label class="form-label" for="usernameInput">Username</label>
+          <input type="text" id="usernameInput" class="form-control" placeholder="e.g. admin" required autofocus autocomplete="username">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="passwordInput">Password</label>
+          <input type="password" id="passwordInput" class="form-control" placeholder="••••••••" required autocomplete="current-password">
+        </div>
+
+        <button type="submit" id="submitBtn" class="btn btn--primary" style="width: 100%; margin-top: 0.5rem;">
+          <span id="submitBtnText">Sign In</span>
+        </button>
+      </form>
+
+      <div class="login-footer">
+        <span>Accounting • PWA Enabled</span>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/components/toast.js"></script>
+  <script src="/js/pwa.js"></script>
+  <script src="/js/pages/login.js"></script>
+</body>
+</html>
