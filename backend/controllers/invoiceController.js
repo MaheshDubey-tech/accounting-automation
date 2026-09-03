@@ -1,4 +1,4 @@
-const { query } = require('../config/db');
+const { query, withTransaction, syncSequences } = require('../config/db');
 const { regenerateExcelReports } = require('../services/excelService');
 
 /**
@@ -223,6 +223,9 @@ const deleteInvoice = async (req, res, next) => {
 
       // Delete invoice
       await client.query('DELETE FROM invoices WHERE id = $1', [id]);
+
+      // Sync sequences so next invoice gets a clean sequential ID
+      await syncSequences(client);
 
       return invoice;
     });

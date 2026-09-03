@@ -46,8 +46,46 @@ const withTransaction = async (callback) => {
   }
 };
 
+/**
+ * Synchronize PostgreSQL sequences with current MAX(id) in tables
+ * If a table is empty, sets sequence to 1 (false) so nextval returns 1
+ */
+const syncSequences = async (clientOrQuery = null) => {
+  const tables = [
+    { table: 'invoices', seq: 'invoices_id_seq' },
+    { table: 'sales', seq: 'sales_id_seq' },
+    { table: 'customers', seq: 'customers_id_seq' },
+    { table: 'stock_items', seq: 'stock_items_id_seq' },
+    { table: 'payments', seq: 'payments_id_seq' },
+    { table: 'reminders_log', seq: 'reminders_log_id_seq' },
+  ];
+
+  const exec = async (text, params) => {
+    if (clientOrQuery && typeof clientOrQuery.query === 'function') {
+      return await clientOrQuery.query(text, params);
+    }
+    return await query(text, params);
+  };
+
+  for (const item of tables) {
+    try {
+      const res = await exec(`SELECT COALESCE(MAX(id), 0) AS max_id FROM ${item.table}`);
+      const maxId = parseInt(res.rows[0].max_id, 10);
+      if (maxId === 0) {
+        await exec(`SELECT setval('${item.seq}', 1, false)`);
+      } else {
+        await exec(`SELECT setval('${item.seq}', ${maxId}, true)`);
+      }
+    } catch (e) {
+      // ignore table or sequence lookup if not matching
+    }
+  }
+};
+
 module.exports = {
   pool,
   query,
   withTransaction,
+  syncSequences,
 };
+

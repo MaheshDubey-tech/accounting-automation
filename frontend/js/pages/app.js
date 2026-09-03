@@ -741,7 +741,7 @@ const App = (() => {
   };
 
   // ==========================================
-  // INTELLIGENT AI OCR SCANNER
+  // UNIVERSAL DOCUMENT & FILE AUTO-IMPORTER
   // ==========================================
   const initOCR = () => {
     const dropzone = document.getElementById('ocrDropzone');
@@ -757,7 +757,7 @@ const App = (() => {
     });
 
     document.getElementById('btnModePaste').addEventListener('click', () => {
-      Toast.info('Press Ctrl+V (or Cmd+V on Mac) anywhere to paste your copied invoice screenshot.');
+      Toast.info('Press Ctrl+V (or Cmd+V on Mac) anywhere to paste your copied invoice screenshot or text.');
     });
 
     // Dropzone Events
@@ -771,25 +771,25 @@ const App = (() => {
       e.preventDefault();
       dropzone.classList.remove('dragover');
       if (e.dataTransfer.files.length > 0) {
-        processOCRImageFile(e.dataTransfer.files[0]);
+        processUniversalFile(e.dataTransfer.files[0]);
       }
     });
 
     fileInput.addEventListener('change', () => {
       if (fileInput.files.length > 0) {
-        processOCRImageFile(fileInput.files[0]);
+        processUniversalFile(fileInput.files[0]);
       }
     });
 
-    // Global Paste Listener for Screenshots
+    // Global Paste Listener for Screenshots or Text
     window.addEventListener('paste', (e) => {
       const items = (e.clipboardData || e.originalEvent.clipboardData).items;
       for (const item of items) {
         if (item.type.indexOf('image') !== -1) {
           const blob = item.getAsFile();
-          Toast.info('Image detected from clipboard! Scanning...');
+          Toast.info('Image detected from clipboard! Processing...');
           navigateTo('ocr');
-          processOCRImageFile(blob);
+          processUniversalFile(blob);
           break;
         }
       }
@@ -831,45 +831,65 @@ const App = (() => {
     document.getElementById('ocrConfirmationForm').addEventListener('submit', handleOCRConfirmationSubmit);
   };
 
-  const processOCRImageFile = async (file) => {
-    if (!file || !file.type.startsWith('image/')) {
-      Toast.error('Please select a valid image file (PNG, JPG, JPEG, WebP).');
-      return;
-    }
+  /**
+   * Process any uploaded file (PDF, Excel, CSV, Image, Text/JSON)
+   */
+  const processUniversalFile = async (file) => {
+    if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      document.getElementById('ocrImagePreview').src = e.target.result;
-    };
-    reader.readAsDataURL(file);
+    const imgPreview = document.getElementById('ocrImagePreview');
+    const textPreview = document.getElementById('ocrTextFallbackPreview');
+    const isImage = file.type && file.type.startsWith('image/');
+    const isPDF = file.type === 'application/pdf' || file.name.endsWith('.pdf');
+    const isExcel = file.name.endsWith('.xlsx') || file.name.endsWith('.xls');
+    const isCSV = file.name.endsWith('.csv');
+
+    if (isImage) {
+      imgPreview.style.display = 'block';
+      textPreview.style.display = 'none';
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        imgPreview.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    } else {
+      imgPreview.style.display = 'none';
+      textPreview.style.display = 'block';
+      let typeLabel = isPDF ? '📄 PDF Document' : (isExcel ? '📊 Excel Spreadsheet' : (isCSV ? '📋 CSV Table' : '📝 Text Document'));
+      textPreview.textContent = `${typeLabel}\n\nFile Name: ${file.name}\nFile Size: ${(file.size / 1024).toFixed(1)} KB\n\nReading and parsing structured records automatically...`;
+    }
 
     const formData = new FormData();
     formData.append('bill_image', file);
 
-    await executeOCRScan(formData);
+    await executeUniversalUpload(formData, file.name);
   };
 
-  const executeOCRScan = async (body, isJson = false) => {
+  /**
+   * Execute upload and parsing on the backend
+   */
+  const executeUniversalUpload = async (body, fileName = 'Uploaded Document') => {
     const progressWrapper = document.getElementById('ocrProgressWrapper');
     const reviewGrid = document.getElementById('ocrReviewGrid');
+    const batchGrid = document.getElementById('ocrBatchGrid');
     const statusText = document.getElementById('ocrProgressStatus');
 
     progressWrapper.style.display = 'block';
     reviewGrid.style.display = 'none';
+    batchGrid.style.display = 'none';
 
-    // Step 1 animation
     setScanStep(1);
-    statusText.textContent = 'Preprocessing document image...';
+    statusText.textContent = `Analyzing ${fileName}...`;
 
     const t1 = setTimeout(() => {
       setScanStep(2);
-      statusText.textContent = 'Extracting invoice text via OCR recognition...';
+      statusText.textContent = 'Parsing document contents and extracting fields...';
     }, 600);
 
     const t2 = setTimeout(() => {
       setScanStep(3);
-      statusText.textContent = 'Parsing vendor, line items, taxes, and amounts...';
-    }, 1400);
+      statusText.textContent = 'Structuring accounting items and financial ledger entries...';
+    }, 1200);
 
     try {
       const res = await API.post('/ocr/scan', body);
@@ -877,23 +897,50 @@ const App = (() => {
       clearTimeout(t2);
 
       progressWrapper.style.display = 'none';
+
+      // Check if Multi-Row Batch spreadsheet (Stock / Customers / Sales Sheet)
+      if (res.isMultiRow) {
+        batchGrid.style.display = 'block';
+        reviewGrid.style.display = 'none';
+
+        state.currentBatchData = {
+          importType: res.importType || 'stock',
+          items: res.items || [],
+          fileName: res.fileName || fileName,
+        };
+
+        renderBatchTable(res.items || [], res.importType || 'stock', res.fileName || fileName);
+        Toast.success(res.message || 'Spreadsheet rows extracted! Review and confirm import.');
+        return;
+      }
+
+      // Single Bill / Invoice Document Verification
       reviewGrid.style.display = 'grid';
+      batchGrid.style.display = 'none';
 
       const data = res.extractedData || {};
       state.currentOCRData = data;
 
-      // Populate Editable Fields
+      // Update Header Badges
+      const docNameEl = document.getElementById('ocrDocumentName');
+      const badgeEl = document.getElementById('ocrFileTypeBadge');
+      if (docNameEl) docNameEl.textContent = res.fileName || fileName || 'Document Preview';
+      if (badgeEl) {
+        badgeEl.textContent = (res.fileType || 'Doc').toUpperCase();
+      }
+
+      // Populate Form Fields
       populateOCREditForm(data);
 
       // Add to Session Scan History
       addScanToHistory(data);
 
-      Toast.success('Bill scanned successfully! Please review and confirm the extracted details.');
+      Toast.success('Document parsed successfully! Please review and confirm the extracted details.');
     } catch (err) {
       clearTimeout(t1);
       clearTimeout(t2);
       progressWrapper.style.display = 'none';
-      Toast.error('OCR Scanning failed: ' + err.message);
+      Toast.error('File reading failed: ' + err.message);
     }
   };
 
@@ -912,14 +959,25 @@ const App = (() => {
     }
   };
 
+  /**
+   * Populate single bill verification form
+   */
   const populateOCREditForm = (data) => {
-    document.getElementById('ocrCustomerInput').value = data.vendor || data.customer || 'Acme Supplies';
+    // Use server-extracted invoice number first, then doc's own invoiceNumber — never random
+    const displayInvNo = data.invoiceNumber || '';
+    document.getElementById('ocrCustomerInput').value = data.customerName || data.vendorName || data.vendor || data.customer || 'Unknown Vendor';
     document.getElementById('ocrContactInput').value = data.contactInfo || (data.taxId ? `GSTIN: ${data.taxId}` : '');
-    document.getElementById('ocrBillNumberInput').value = data.invoiceNumber || `INV-${Math.floor(1000 + Math.random() * 9000)}`;
+    document.getElementById('ocrBillNumberInput').value = displayInvNo;
     document.getElementById('ocrCategorySelect').value = data.category || 'General Supplies';
-    document.getElementById('ocrDateInput').value = data.billDate || getTodayDateStr();
+    document.getElementById('ocrDateInput').value = data.invoiceDate || data.billDate || getTodayDateStr();
     document.getElementById('ocrDueDateInput').value = data.dueDate || getTodayDateStr();
     document.getElementById('ocrRawText').value = data.rawText || '';
+
+    // If text fallback preview is active, show raw text
+    const textPreview = document.getElementById('ocrTextFallbackPreview');
+    if (textPreview && textPreview.style.display !== 'none' && data.rawText) {
+      textPreview.textContent = `=== EXTRACTED TEXT FROM DOCUMENT ===\n\n${data.rawText}`;
+    }
 
     // Confidence badge
     const badge = document.getElementById('ocrConfidenceBadge');
@@ -950,21 +1008,24 @@ const App = (() => {
     document.getElementById('ocrPaymentModeGroup').style.display = data.paymentStatus === 'paid' ? 'block' : 'none';
   };
 
+  /**
+   * Render dynamic line items table
+   */
   const renderOCRLineItems = (items) => {
     const tbody = document.getElementById('ocrLineItemsBody');
     tbody.innerHTML = items.map((item, index) => `
       <tr data-item-index="${index}">
         <td>
-          <input type="text" class="line-desc" value="${escapeHtml(item.description)}" placeholder="Item description" required>
+          <input type="text" class="line-desc" value="${escapeHtml(item.description || item.name || '')}" placeholder="Item description" required>
         </td>
         <td>
-          <input type="number" class="line-qty" value="${item.quantity || 1}" min="1" required oninput="App.recalculateTotals();">
+          <input type="number" class="line-qty" value="${item.quantity || item.qty || 1}" min="1" required oninput="App.recalculateTotals();">
         </td>
         <td>
-          <input type="number" class="line-rate" value="${(item.unit_price || 0).toFixed(2)}" step="0.01" min="0" required oninput="App.recalculateTotals();">
+          <input type="number" class="line-rate" value="${(item.unit_price || item.rate || 0).toFixed(2)}" step="0.01" min="0" required oninput="App.recalculateTotals();">
         </td>
         <td style="font-weight: 700;" class="line-total-cell">
-          ₹${((item.quantity || 1) * (item.unit_price || 0)).toFixed(2)}
+          ₹${(((item.quantity || item.qty || 1)) * (item.unit_price || item.rate || 0)).toFixed(2)}
         </td>
         <td style="text-align: center;">
           <button type="button" class="btn btn--icon btn--sm" style="color: var(--danger); border: none;" onclick="App.removeOCRLineItem(this);" title="Delete row">✕</button>
@@ -977,7 +1038,7 @@ const App = (() => {
     const tbody = document.getElementById('ocrLineItemsBody');
     const tr = document.createElement('tr');
     tr.innerHTML = `
-      <td><input type="text" class="line-desc" value="New Invoice Item" placeholder="Item description" required></td>
+      <td><input type="text" class="line-desc" value="New Item" placeholder="Item description" required></td>
       <td><input type="number" class="line-qty" value="1" min="1" required oninput="App.recalculateTotals();"></td>
       <td><input type="number" class="line-rate" value="0.00" step="0.01" min="0" required oninput="App.recalculateTotals();"></td>
       <td style="font-weight: 700;" class="line-total-cell">₹0.00</td>
@@ -1004,11 +1065,16 @@ const App = (() => {
     const rows = document.querySelectorAll('#ocrLineItemsBody tr');
 
     rows.forEach((row) => {
-      const qty = parseFloat(row.querySelector('.line-qty').value) || 0;
-      const rate = parseFloat(row.querySelector('.line-rate').value) || 0;
-      const total = qty * rate;
-      subtotal += total;
-      row.querySelector('.line-total-cell').textContent = '₹' + total.toFixed(2);
+      const qtyInput = row.querySelector('.line-qty');
+      const rateInput = row.querySelector('.line-rate');
+      if (qtyInput && rateInput) {
+        const qty = parseFloat(qtyInput.value) || 0;
+        const rate = parseFloat(rateInput.value) || 0;
+        const total = qty * rate;
+        subtotal += total;
+        const totalCell = row.querySelector('.line-total-cell');
+        if (totalCell) totalCell.textContent = '₹' + total.toFixed(2);
+      }
     });
 
     const taxRate = parseFloat(document.getElementById('ocrTaxRateInput').value) || 0;
@@ -1045,6 +1111,9 @@ const App = (() => {
     }
   };
 
+  /**
+   * Handle Single Bill Confirmation Submit
+   */
   const handleOCRConfirmationSubmit = async (e) => {
     e.preventDefault();
     const customerName = document.getElementById('ocrCustomerInput').value.trim();
@@ -1062,12 +1131,17 @@ const App = (() => {
       return;
     }
 
-    // First line item description
-    const firstRowDesc = document.querySelector('#ocrLineItemsBody .line-desc');
-    const itemName = firstRowDesc ? firstRowDesc.value.trim() : 'Scanned Invoice Item';
-
-    const firstRowQty = document.querySelector('#ocrLineItemsBody .line-qty');
-    const units = firstRowQty ? parseInt(firstRowQty.value, 10) : 1;
+    // Collect all line items
+    const lineItemRows = document.querySelectorAll('#ocrLineItemsBody tr');
+    const items = [];
+    lineItemRows.forEach((row) => {
+      const desc = row.querySelector('.line-desc').value.trim();
+      const qty = parseInt(row.querySelector('.line-qty').value, 10) || 1;
+      const rate = parseFloat(row.querySelector('.line-rate').value) || 0;
+      if (desc) {
+        items.push({ description: desc, quantity: qty, unit_price: rate });
+      }
+    });
 
     const confirmBtn = document.getElementById('ocrConfirmSaveBtn');
     confirmBtn.disabled = true;
@@ -1078,17 +1152,16 @@ const App = (() => {
         customer_name: customerName,
         contact_info: contactInfo,
         billing_terms: 30,
-        item_name: itemName,
-        units,
+        items,
         total_amount: grandTotal,
         bill_date: billDate,
         due_date: dueDate,
         payment_status: paymentStatus,
         payment_mode: paymentMode,
-        notes: `AI Scanned Bill [Category: ${category}]`,
+        notes: `Universal Importer [Category: ${category}]`,
       });
 
-      Toast.success(res.message || 'Scanned bill confirmed and recorded into database!');
+      Toast.success(res.message || 'Document confirmed and recorded into database & live Excel!');
       await refreshAllData();
       navigateTo('invoices');
     } catch (err) {
@@ -1102,11 +1175,190 @@ const App = (() => {
     }
   };
 
+  // ==========================================
+  // MULTI-ROW SPREADSHEET BATCH IMPORT METHODS
+  // ==========================================
+  const renderBatchTable = (items, importType, fileName) => {
+    const thead = document.getElementById('batchTableHead');
+    const tbody = document.getElementById('batchTableBody');
+    const badge = document.getElementById('batchTypeBadge');
+    const title = document.getElementById('batchTitle');
+    const summary = document.getElementById('batchSummaryText');
+    const countEl = document.getElementById('batchRowCount');
+
+    badge.textContent = importType === 'stock' ? 'Stock Spreadsheet' : (importType === 'customers' ? 'Customer Directory' : 'Spreadsheet Batch');
+    title.textContent = `Review & Confirm Import from "${fileName || 'Spreadsheet'}"`;
+    summary.textContent = `Extracted ${items.length} records. Edit any cell before saving to accounting ledger.`;
+    countEl.textContent = `${items.length} records ready to import`;
+
+    if (importType === 'stock') {
+      thead.innerHTML = `
+        <tr>
+          <th style="width: 45%;">Item / Product Name</th>
+          <th style="width: 25%;">Available Quantity</th>
+          <th style="width: 25%;">Unit Price (₹)</th>
+          <th style="width: 5%;"></th>
+        </tr>
+      `;
+      tbody.innerHTML = items.map((item, i) => `
+        <tr data-batch-index="${i}">
+          <td><input type="text" class="form-control batch-name" value="${escapeHtml(item.name || '')}" required></td>
+          <td><input type="number" class="form-control batch-qty" value="${item.quantity_available || 100}" min="0" required></td>
+          <td><input type="number" class="form-control batch-price" value="${(item.unit_price || 0).toFixed(2)}" step="0.01" min="0" required></td>
+          <td style="text-align: center;"><button type="button" class="btn btn--icon btn--sm" style="color: var(--danger); border: none;" onclick="App.removeBatchRow(this);">✕</button></td>
+        </tr>
+      `).join('');
+    } else if (importType === 'customers') {
+      thead.innerHTML = `
+        <tr>
+          <th style="width: 40%;">Customer / Company Name</th>
+          <th style="width: 35%;">Contact Info (Phone / Email)</th>
+          <th style="width: 20%;">Billing Terms (Days)</th>
+          <th style="width: 5%;"></th>
+        </tr>
+      `;
+      tbody.innerHTML = items.map((cust, i) => `
+        <tr data-batch-index="${i}">
+          <td><input type="text" class="form-control batch-name" value="${escapeHtml(cust.name || '')}" required></td>
+          <td><input type="text" class="form-control batch-contact" value="${escapeHtml(cust.contact_info || '')}" placeholder="Phone / Email"></td>
+          <td><input type="number" class="form-control batch-terms" value="${cust.billing_terms || 30}" min="0" required></td>
+          <td style="text-align: center;"><button type="button" class="btn btn--icon btn--sm" style="color: var(--danger); border: none;" onclick="App.removeBatchRow(this);">✕</button></td>
+        </tr>
+      `).join('');
+    }
+  };
+
+  const addBatchRow = () => {
+    const tbody = document.getElementById('batchTableBody');
+    const importType = state.currentBatchData ? state.currentBatchData.importType : 'stock';
+    const tr = document.createElement('tr');
+
+    if (importType === 'stock') {
+      tr.innerHTML = `
+        <td><input type="text" class="form-control batch-name" value="New Stock Item" required></td>
+        <td><input type="number" class="form-control batch-qty" value="100" min="0" required></td>
+        <td><input type="number" class="form-control batch-price" value="0.00" step="0.01" min="0" required></td>
+        <td style="text-align: center;"><button type="button" class="btn btn--icon btn--sm" style="color: var(--danger); border: none;" onclick="App.removeBatchRow(this);">✕</button></td>
+      `;
+    } else {
+      tr.innerHTML = `
+        <td><input type="text" class="form-control batch-name" value="New Customer" required></td>
+        <td><input type="text" class="form-control batch-contact" value="" placeholder="Phone / Email"></td>
+        <td><input type="number" class="form-control batch-terms" value="30" min="0" required></td>
+        <td style="text-align: center;"><button type="button" class="btn btn--icon btn--sm" style="color: var(--danger); border: none;" onclick="App.removeBatchRow(this);">✕</button></td>
+      `;
+    }
+    tbody.appendChild(tr);
+    updateBatchCount();
+  };
+
+  const removeBatchRow = (btn) => {
+    btn.closest('tr').remove();
+    updateBatchCount();
+  };
+
+  const updateBatchCount = () => {
+    const rows = document.querySelectorAll('#batchTableBody tr');
+    const countEl = document.getElementById('batchRowCount');
+    if (countEl) countEl.textContent = `${rows.length} records ready to import`;
+  };
+
+  const submitBatchImport = async () => {
+    if (!state.currentBatchData) return;
+    const importType = state.currentBatchData.importType || 'stock';
+    const rows = document.querySelectorAll('#batchTableBody tr');
+    const items = [];
+
+    rows.forEach((row) => {
+      const name = row.querySelector('.batch-name').value.trim();
+      if (name) {
+        if (importType === 'stock') {
+          const qty = parseInt(row.querySelector('.batch-qty').value, 10) || 0;
+          const price = parseFloat(row.querySelector('.batch-price').value) || 0;
+          items.push({ name, quantity_available: qty, unit_price: price });
+        } else {
+          const contact = row.querySelector('.batch-contact').value.trim();
+          const terms = parseInt(row.querySelector('.batch-terms').value, 10) || 30;
+          items.push({ name, contact_info: contact, billing_terms: terms });
+        }
+      }
+    });
+
+    if (items.length === 0) {
+      Toast.error('No valid rows found to import.');
+      return;
+    }
+
+    const btn = document.getElementById('btnConfirmBatch');
+    btn.disabled = true;
+    btn.textContent = `Importing ${items.length} records...`;
+
+    try {
+      const res = await API.post('/ocr/confirm-batch', {
+        importType,
+        items,
+      });
+
+      Toast.success(res.message || `Successfully imported ${items.length} records!`);
+      resetOCRView();
+      await refreshAllData();
+      navigateTo(importType === 'stock' ? 'stock' : 'customers');
+    } catch (err) {
+      Toast.error('Batch import failed: ' + err.message);
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = `
+        <svg style="width: 18px; height: 18px;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+        <span>Confirm & Import All Rows into Accounting</span>
+      `;
+    }
+  };
+
   const resetOCRView = () => {
+    // Hide all review/batch panels
     document.getElementById('ocrReviewGrid').style.display = 'none';
+    document.getElementById('ocrBatchGrid').style.display = 'none';
     document.getElementById('ocrProgressWrapper').style.display = 'none';
+
+    // Reset image and text preview
+    const imgPreview = document.getElementById('ocrImagePreview');
+    if (imgPreview) { imgPreview.src = ''; imgPreview.style.transform = 'scale(1)'; }
+    const textPreview = document.getElementById('ocrTextFallbackPreview');
+    if (textPreview) { textPreview.style.display = 'none'; textPreview.textContent = ''; }
+
+    // Reset zoom level
     state.ocrZoomLevel = 1;
-    document.getElementById('ocrImagePreview').src = '';
+
+    // Clear current state
+    state.currentOCRData = null;
+    state.currentBatchData = null;
+
+    // Reset file input so same file can be re-uploaded
+    const fileInput = document.getElementById('ocrFileInput');
+    if (fileInput) fileInput.value = '';
+
+    // Clear form fields
+    const fieldsToReset = ['ocrCustomerInput', 'ocrContactInput', 'ocrBillNumberInput', 'ocrRawText'];
+    fieldsToReset.forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) el.value = '';
+    });
+
+    // Reset totals display
+    ['ocrSubtotalDisplay', 'ocrTaxAmountDisplay', 'ocrDiscountDisplay', 'ocrGrandTotalDisplay'].forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = '₹0.00';
+    });
+    const taxInput = document.getElementById('ocrTaxRateInput');
+    if (taxInput) taxInput.value = '0';
+    const discInput = document.getElementById('ocrDiscountInput');
+    if (discInput) discInput.value = '0';
+
+    // Clear line items table
+    const tbody = document.getElementById('ocrLineItemsBody');
+    if (tbody) tbody.innerHTML = '';
+
+    Toast.info('Preview cleared. You can now upload a new document.');
   };
 
   // ==========================================
@@ -1158,7 +1410,7 @@ const App = (() => {
     closeCameraModal();
     navigateTo('ocr');
 
-    executeOCRScan({ imageBase64: base64Image });
+    executeUniversalUpload({ imageBase64: base64Image }, 'Camera Capture.png');
   };
 
   const closeCameraModal = () => {
@@ -1170,15 +1422,62 @@ const App = (() => {
   };
 
   // ==========================================
-  // SAMPLE BILL GENERATOR FOR INSTANT TESTING
+  // SAMPLE BILL & SPREADSHEET GENERATOR FOR INSTANT DEMONSTRATION
   // ==========================================
   const loadSampleBill = (type) => {
+    navigateTo('ocr');
+
+    if (type === 'stock_sheet') {
+      // Simulate instant Excel Stock spreadsheet parsing
+      const sampleItems = [
+        { name: 'MacBook Pro M3 Max (16GB, 512GB)', quantity_available: 25, unit_price: 199900.00 },
+        { name: 'Dell UltraSharp 4K Monitor 27"', quantity_available: 40, unit_price: 34500.00 },
+        { name: 'Logitech MX Master 3S Wireless Mouse', quantity_available: 75, unit_price: 8495.00 },
+        { name: 'Ergonomic Standing Desk Frame', quantity_available: 18, unit_price: 26000.00 },
+        { name: 'Keychron Q1 Pro Mechanical Keyboard', quantity_available: 50, unit_price: 14500.00 },
+      ];
+
+      state.currentBatchData = {
+        importType: 'stock',
+        items: sampleItems,
+        fileName: 'Inventory_Stock_Master_2026.xlsx',
+      };
+
+      document.getElementById('ocrBatchGrid').style.display = 'block';
+      document.getElementById('ocrReviewGrid').style.display = 'none';
+      renderBatchTable(sampleItems, 'stock', 'Inventory_Stock_Master_2026.xlsx');
+      Toast.info('Sample Excel Stock Spreadsheet parsed! Review table and click Confirm.');
+      return;
+    }
+
+    if (type === 'cust_sheet') {
+      // Simulate instant CSV Customer Directory parsing
+      const sampleCusts = [
+        { name: 'Tata Consultancy Services', contact_info: '+91 22 6778 9999 | billing@tcs.com', billing_terms: 45 },
+        { name: 'Infosys Enterprise Solutions', contact_info: '+91 80 2852 0261 | accounts@infosys.com', billing_terms: 30 },
+        { name: 'Wipro Digital Services', contact_info: '+91 80 4672 6000 | finance@wipro.com', billing_terms: 30 },
+        { name: 'HCL Technologies Ltd', contact_info: '+91 120 401 3000 | vendor@hcl.com', billing_terms: 60 },
+      ];
+
+      state.currentBatchData = {
+        importType: 'customers',
+        items: sampleCusts,
+        fileName: 'Customer_Directory_Q3.csv',
+      };
+
+      document.getElementById('ocrBatchGrid').style.display = 'block';
+      document.getElementById('ocrReviewGrid').style.display = 'none';
+      renderBatchTable(sampleCusts, 'customers', 'Customer_Directory_Q3.csv');
+      Toast.info('Sample CSV Customer Directory parsed! Review table and click Confirm.');
+      return;
+    }
+
+    // Single Invoices
     const canvas = document.createElement('canvas');
     canvas.width = 800;
     canvas.height = 1000;
     const ctx = canvas.getContext('2d');
 
-    // Draw realistic clean invoice receipt canvas
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(0, 0, 800, 1000);
 
@@ -1199,13 +1498,6 @@ const App = (() => {
       item2 = 'Laser Printer Cartridge (Black)';
       rate1 = 4500.00;
       rate2 = 2800.00;
-    } else if (type === 'hardware') {
-      vendor = 'Global Hardware & Tools Corp';
-      invNo = `INV-HD-${Math.floor(1000 + Math.random() * 9000)}`;
-      item1 = 'Heavy Duty Industrial Screws (1000pcs)';
-      item2 = 'Steel Mounting Brackets (Set of 20)';
-      rate1 = 18500.00;
-      rate2 = 6500.00;
     }
 
     ctx.fillText(vendor, 50, 80);
@@ -1242,7 +1534,6 @@ const App = (() => {
     ctx.fillText(`₹${rate2.toFixed(2)}`, 530, 350);
     ctx.fillText(`₹${rate2.toFixed(2)}`, 660, 350);
 
-    // Subtotal & Grand Total
     const total = rate1 + rate2;
     ctx.fillRect(50, 400, 700, 2);
     ctx.font = 'bold 16px sans-serif';
@@ -1252,15 +1543,9 @@ const App = (() => {
     ctx.fillText('Grand Total:', 530, 480);
     ctx.fillText(`₹${total.toFixed(2)}`, 660, 480);
 
-    ctx.font = 'italic 12px sans-serif';
-    ctx.fillStyle = '#94a3b8';
-    ctx.fillText('Thank you for your business! Payment due within 30 days.', 50, 560);
-
     const base64Data = canvas.toDataURL('image/png');
     document.getElementById('ocrImagePreview').src = base64Data;
-    navigateTo('ocr');
-
-    executeOCRScan({ imageBase64: base64Data });
+    executeUniversalUpload({ imageBase64: base64Data }, `${vendor}_Invoice.png`);
   };
 
   // ==========================================

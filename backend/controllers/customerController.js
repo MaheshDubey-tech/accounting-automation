@@ -1,4 +1,4 @@
-const { query } = require('../config/db');
+const { query, withTransaction, syncSequences } = require('../config/db');
 const { regenerateExcelReports } = require('../services/excelService');
 
 /**
@@ -132,6 +132,7 @@ const deleteCustomer = async (req, res, next) => {
 
     const { withTransaction } = require('../config/db');
 
+
     const result = await withTransaction(async (client) => {
       // 1. Verify customer exists
       const custRes = await client.query('SELECT * FROM customers WHERE id = $1 FOR UPDATE', [id]);
@@ -169,6 +170,9 @@ const deleteCustomer = async (req, res, next) => {
 
       // 5. Delete customer record
       await client.query('DELETE FROM customers WHERE id = $1', [id]);
+
+      // 6. Sync sequences so next records get proper sequential IDs
+      await syncSequences(client);
 
       return customer;
     });

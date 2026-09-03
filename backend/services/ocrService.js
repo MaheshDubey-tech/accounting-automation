@@ -3,12 +3,16 @@ const fs = require('fs');
 
 /**
  * Intelligent parser for Bills, Invoices, and Receipts
+ * Extracts: Document Type, Invoice Number, Vendor Name, Customer Name,
+ * Contact/GSTIN, Dates, Line Items breakdown, Subtotal, Tax %, Discount, Total Amount.
  */
-const parseBillText = (text) => {
+const parseBillText = (text, fallbackInvoiceNo = null) => {
+  const defaultInvNo = fallbackInvoiceNo || 'INV-1';
+
   if (!text || typeof text !== 'string') {
     return {
       docType: 'invoice',
-      invoiceNumber: `INV-${Date.now().toString().slice(-6)}`,
+      invoiceNumber: defaultInvNo,
       vendorName: 'Scanned Vendor',
       customerName: 'Default Customer',
       contactInfo: '',
@@ -29,13 +33,19 @@ const parseBillText = (text) => {
     };
   }
 
-  const rawLines = text.split('\n');
+  // Preprocess text: clean non-printable characters and normalize spacing
+  const cleanRawText = text
+    .replace(/\r\n/g, '\n')
+    .replace(/\r/g, '\n')
+    .replace(/[\u200B-\u200D\uFEFF]/g, '');
+
+  const rawLines = cleanRawText.split('\n');
   const cleanLines = rawLines.map((l) => l.trim()).filter((l) => l.length > 0);
-  const lowerText = text.toLowerCase();
+  const lowerText = cleanRawText.toLowerCase();
 
   // 1. Detect Document Type
   let docType = 'invoice';
-  if (lowerText.includes('receipt') || lowerText.includes('cash memo')) {
+  if (lowerText.includes('receipt') || lowerText.includes('cash memo') || lowerText.includes('payment receipt')) {
     docType = 'receipt';
   } else if (lowerText.includes('purchase order') || lowerText.includes('vendor bill') || lowerText.includes('tax bill')) {
     docType = 'bill';
@@ -44,18 +54,18 @@ const parseBillText = (text) => {
   // 2. Detect Invoice / Bill Number
   let invoiceNumber = '';
   const invNumPatterns = [
-    /(?:invoice|bill|receipt|tax\s*invoice|inv|ref|doc|order)\s*(?:no\.?|num|number|#|code)?\s*[:\-\s]\s*([a-zA-Z0-9\-_/]{3,30})/i,
-    /\b(INV[-/][0-9]{3,10})\b/i,
-    /\b(BILL[-/][0-9]{3,10})\b/i,
-    /#\s*([a-zA-Z0-9\-_/]{3,20})/i,
-    /\b([A-Z]{2,4}[-][0-9]{4,8})\b/,
+    /(?:invoice|bill|receipt|tax\s*invoice|inv|ref|doc|order)\s*(?:no\.?|num|number|#|code)?\s*[:\-\s]\s*([a-zA-Z0-9\-_/]{2,30})/i,
+    /\b(INV[-_/][a-zA-Z0-9]{1,12})\b/i,
+    /\b(BILL[-_/][a-zA-Z0-9]{1,12})\b/i,
+    /#\s*([a-zA-Z0-9\-_/]{1,20})/i,
+    /\b([A-Z]{2,4}[-][0-9]{1,8})\b/,
   ];
 
   for (const pattern of invNumPatterns) {
-    const match = text.match(pattern);
+    const match = cleanRawText.match(pattern);
     if (match && match[1]) {
-      const candidate = match[1].trim().replace(/[:;,]$/, '');
-      if (candidate.length >= 3 && !['date', 'total', 'amount', 'name', 'phone', 'mail'].includes(candidate.toLowerCase())) {
+      const candidate = match[1].trim().replace(/[:;,.\s]+$/, '');
+      if (candidate.length >= 1 && !['date', 'total', 'amount', 'name', 'phone', 'mail', 'gst', 'gstin'].includes(candidate.toLowerCase())) {
         invoiceNumber = candidate;
         break;
       }
@@ -63,20 +73,19 @@ const parseBillText = (text) => {
   }
 
   if (!invoiceNumber) {
-    invoiceNumber = `INV-${Math.floor(100000 + Math.random() * 900000)}`;
+    invoiceNumber = defaultInvNo;
   }
 
   // 3. Detect Vendor / Company Name
   let vendorName = '';
-  // Check for explicit "From:", "Vendor:", "Supplier:", "Billed By:"
-  const vendorLabelMatch = text.match(/(?:from|vendor|supplier|billed\s*by|seller|merchant)\s*[:\-]\s*([a-zA-Z0-9\s&.,'-]{3,50})/i);
+  const vendorLabelMatch = cleanRawText.match(/(?:from|vendor|supplier|billed\s*by|seller|merchant|company)\s*[:\-]\s*([a-zA-Z0-9\s&.,'-]{3,50})/i);
   if (vendorLabelMatch && vendorLabelMatch[1]) {
     vendorName = vendorLabelMatch[1].trim();
   }
 
   if (!vendorName) {
-    // Pick the most prominent early line that isn't a generic heading
-    const headerCandidates = cleanLines.slice(0, 6).filter((line) => {
+    // Pick the most prominent top line that isn't a generic heading
+    const headerCandidates = cleanLines.slice(0, 8).filter((line) => {
       const lower = line.toLowerCase();
       return (
         !lower.includes('invoice') &&
@@ -109,21 +118,21 @@ const parseBillText = (text) => {
 
   // 4. Detect Customer / Buyer Name
   let customerName = '';
-  const customerLabelMatch = text.match(/(?:to|bill\s*to|ship\s*to|customer|client|buyer|billed\s*to)\s*[:\-]\s*([a-zA-Z0-9\s&.,'-]{3,50})/i);
+  const customerLabelMatch = cleanRawText.match(/(?:to|bill\s*to|ship\s*to|customer|client|buyer|billed\s*to|m\/s)\s*[:\-]\s*([a-zA-Z0-9\s&.,'-]{3,50})/i);
   if (customerLabelMatch && customerLabelMatch[1]) {
     customerName = customerLabelMatch[1].trim();
   }
   if (!customerName) {
-    customerName = vendorName; // default to vendor/issuer name
+    customerName = vendorName;
   }
 
   // 5. Detect Tax ID / GSTIN / PAN / VAT
   let taxId = '';
-  const gstMatch = text.match(/\b([0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1})\b/); // Standard 15-digit GSTIN
+  const gstMatch = cleanRawText.match(/\b([0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1})\b/);
   if (gstMatch && gstMatch[1]) {
     taxId = gstMatch[1];
   } else {
-    const genericTax = text.match(/(?:gstin|gst|tax\s*id|vat|pan|ein)\s*(?:no\.?|#)?\s*[:\-]?\s*([a-zA-Z0-9\-_]{6,20})/i);
+    const genericTax = cleanRawText.match(/(?:gstin|gst|tax\s*id|vat|pan|ein)\s*(?:no\.?|#)?\s*[:\-]?\s*([a-zA-Z0-9\-_]{6,20})/i);
     if (genericTax && genericTax[1]) {
       taxId = genericTax[1].trim();
     }
@@ -131,11 +140,11 @@ const parseBillText = (text) => {
 
   // 6. Detect Contact Info (Phone / Email)
   let contactInfo = '';
-  const phoneMatch = text.match(/(?:tel|phone|mob|contact|cell)?\s*[:\-]?\s*(\+?[0-9]{1,3}[-.\s]?[0-9]{3,5}[-.\s]?[0-9]{3,5})/i);
+  const phoneMatch = cleanRawText.match(/(?:tel|phone|mob|contact|cell)?\s*[:\-]?\s*(\+?[0-9]{1,3}[-.\s]?[0-9]{3,5}[-.\s]?[0-9]{3,5})/i);
   if (phoneMatch && phoneMatch[1] && phoneMatch[1].replace(/[^0-9]/g, '').length >= 8) {
     contactInfo += phoneMatch[1].trim();
   }
-  const emailMatch = text.match(/\b([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})\b/);
+  const emailMatch = cleanRawText.match(/\b([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})\b/);
   if (emailMatch && emailMatch[1]) {
     contactInfo = contactInfo ? `${contactInfo} | ${emailMatch[1]}` : emailMatch[1];
   }
@@ -144,41 +153,34 @@ const parseBillText = (text) => {
   let invoiceDate = '';
   let dueDate = '';
 
-  const datePatterns = [
-    /\b(\d{4}[-/.]\d{1,2}[-/.]\d{1,2})\b/, // 2026-08-28
-    /\b(\d{1,2}[-/.]\d{1,2}[-/.]\d{4})\b/, // 28/08/2026 or 08/28/2026
-    /\b(\d{1,2}\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+\d{4})\b/i,
-    /\b((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+\d{1,2},?\s+\d{4})\b/i,
-  ];
-
-  // Look for explicit "Date:" line
-  const dateLineMatch = text.match(/(?:date|invoice\s*date|bill\s*date|dated)\s*[:\-]?\s*([0-9a-zA-Z\s,./-]{6,25})/i);
-  if (dateLineMatch && dateLineMatch[1]) {
-    for (const pat of datePatterns) {
-      const match = dateLineMatch[1].match(pat);
-      if (match && match[1]) {
-        const parsed = new Date(match[1]);
-        if (!isNaN(parsed.getTime())) {
-          invoiceDate = parsed.toISOString().split('T')[0];
-          break;
-        }
+  const parseDateStr = (str) => {
+    if (!str) return null;
+    // Format: DD/MM/YYYY or DD-MM-YYYY or DD.MM.YYYY
+    const dmyMatch = str.match(/^(\d{1,2})[-/.](\d{1,2})[-/.](\d{4})$/);
+    if (dmyMatch) {
+      const d = parseInt(dmyMatch[1], 10);
+      const m = parseInt(dmyMatch[2], 10);
+      const y = parseInt(dmyMatch[3], 10);
+      if (m >= 1 && m <= 12 && d >= 1 && d <= 31) {
+        return `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
       }
     }
+    const parsed = new Date(str);
+    if (!isNaN(parsed.getTime())) {
+      return parsed.toISOString().split('T')[0];
+    }
+    return null;
+  };
+
+  const dateLineMatch = cleanRawText.match(/(?:date|invoice\s*date|bill\s*date|dated)\s*[:\-]?\s*([0-9a-zA-Z\s,./-]{6,25})/i);
+  if (dateLineMatch && dateLineMatch[1]) {
+    invoiceDate = parseDateStr(dateLineMatch[1].trim());
   }
 
-  // Fallback date match across entire text
   if (!invoiceDate) {
-    for (const pattern of datePatterns) {
-      const match = text.match(pattern);
-      if (match && match[1]) {
-        try {
-          const parsedDate = new Date(match[1]);
-          if (!isNaN(parsedDate.getTime())) {
-            invoiceDate = parsedDate.toISOString().split('T')[0];
-            break;
-          }
-        } catch (e) {}
-      }
+    const rawDateMatch = cleanRawText.match(/\b(\d{1,2}[-/.]\d{1,2}[-/.]\d{4}|\d{4}[-/.]\d{1,2}[-/.]\d{1,2})\b/);
+    if (rawDateMatch && rawDateMatch[1]) {
+      invoiceDate = parseDateStr(rawDateMatch[1]);
     }
   }
 
@@ -186,19 +188,9 @@ const parseBillText = (text) => {
     invoiceDate = new Date().toISOString().split('T')[0];
   }
 
-  // Look for Due Date
-  const dueDateMatch = text.match(/(?:due\s*date|payment\s*due|pay\s*by)\s*[:\-]?\s*([0-9a-zA-Z\s,./-]{6,25})/i);
+  const dueDateMatch = cleanRawText.match(/(?:due\s*date|payment\s*due|pay\s*by)\s*[:\-]?\s*([0-9a-zA-Z\s,./-]{6,25})/i);
   if (dueDateMatch && dueDateMatch[1]) {
-    for (const pat of datePatterns) {
-      const match = dueDateMatch[1].match(pat);
-      if (match && match[1]) {
-        const parsed = new Date(match[1]);
-        if (!isNaN(parsed.getTime())) {
-          dueDate = parsed.toISOString().split('T')[0];
-          break;
-        }
-      }
-    }
+    dueDate = parseDateStr(dueDateMatch[1].trim());
   }
 
   if (!dueDate) {
@@ -207,14 +199,13 @@ const parseBillText = (text) => {
     dueDate = invD.toISOString().split('T')[0];
   }
 
-  // 8. Financial Amounts Extraction (Total, Subtotal, Tax, Discount)
+  // 8. Financial Amounts Extraction
   let totalAmount = null;
   let subtotal = null;
   let taxRate = 0;
   let taxAmount = 0;
   let discount = 0;
 
-  // Total patterns
   const totalKeywords = [
     'grand total',
     'net payable',
@@ -231,7 +222,7 @@ const parseBillText = (text) => {
     const lower = line.toLowerCase();
     for (const kw of totalKeywords) {
       if (lower.includes(kw)) {
-        const amtMatch = line.match(/(?:[$€£₹]?)\s*([\d,]+\.\d{2}|\b\d+\b)/);
+        const amtMatch = line.match(/(?:[$€£₹]|rs\.?|inr)?\s*([\d,]+\.\d{2}|\b\d+\b)/i);
         if (amtMatch && amtMatch[1]) {
           const num = parseFloat(amtMatch[1].replace(/,/g, ''));
           if (!isNaN(num) && num > 0) {
@@ -244,11 +235,10 @@ const parseBillText = (text) => {
     if (totalAmount) break;
   }
 
-  // Subtotal check
   for (const line of cleanLines) {
     const lower = line.toLowerCase();
     if (lower.includes('subtotal') || lower.includes('sub total') || lower.includes('net total')) {
-      const amtMatch = line.match(/(?:[$€£₹]?)\s*([\d,]+\.\d{2}|\b\d+\b)/);
+      const amtMatch = line.match(/(?:[$€£₹]|rs\.?|inr)?\s*([\d,]+\.\d{2}|\b\d+\b)/i);
       if (amtMatch && amtMatch[1]) {
         const num = parseFloat(amtMatch[1].replace(/,/g, ''));
         if (!isNaN(num) && num > 0) {
@@ -259,29 +249,26 @@ const parseBillText = (text) => {
     }
   }
 
-  // Tax detection (GST / VAT / Tax)
-  const taxMatch = text.match(/(?:gst|tax|vat|cgst|sgst|igst)\s*(?:@\s*)?(\d{1,2}(?:\.\d{1,2})?)\s*%/i);
+  const taxMatch = cleanRawText.match(/(?:gst|tax|vat|cgst|sgst|igst)\s*(?:@\s*)?(\d{1,2}(?:\.\d{1,2})?)\s*%/i);
   if (taxMatch && taxMatch[1]) {
     taxRate = parseFloat(taxMatch[1]) || 0;
   }
 
-  const taxAmtMatch = text.match(/(?:tax\s*amount|total\s*tax|gst\s*amount|vat\s*amount)\s*[:\-]?\s*(?:[$€£₹]?)\s*([\d,]+\.\d{2})/i);
+  const taxAmtMatch = cleanRawText.match(/(?:tax\s*amount|total\s*tax|gst\s*amount|vat\s*amount)\s*[:\-]?\s*(?:[$€£₹]|rs\.?|inr)?\s*([\d,]+\.\d{2})/i);
   if (taxAmtMatch && taxAmtMatch[1]) {
     taxAmount = parseFloat(taxAmtMatch[1].replace(/,/g, '')) || 0;
   }
 
-  // Discount detection
-  const discMatch = text.match(/(?:discount|disc|savings)\s*[:\-]?\s*(?:[$€£₹]?)\s*([\d,]+\.\d{2})/i);
+  const discMatch = cleanRawText.match(/(?:discount|disc|savings)\s*[:\-]?\s*(?:[$€£₹]|rs\.?|inr)?\s*([\d,]+\.\d{2})/i);
   if (discMatch && discMatch[1]) {
     discount = parseFloat(discMatch[1].replace(/,/g, '')) || 0;
   }
 
-  // Fallback Amount Check
   if (!totalAmount) {
     const allAmounts = [];
-    const amountRegex = /(?:[$€£₹]?)\s*(\d{1,3}(?:,\d{3})*\.\d{2})/g;
+    const amountRegex = /(?:[$€£₹]|rs\.?|inr)?\s*(\d{1,3}(?:,\d{3})*\.\d{2})/gi;
     let match;
-    while ((match = amountRegex.exec(text)) !== null) {
+    while ((match = amountRegex.exec(cleanRawText)) !== null) {
       const val = parseFloat(match[1].replace(/,/g, ''));
       if (!isNaN(val) && val > 0) allAmounts.push(val);
     }
@@ -298,7 +285,7 @@ const parseBillText = (text) => {
 
   // 9. Line Items Extraction
   const items = [];
-  const itemLineRegex = /^([a-zA-Z0-9\s&.,'-]{3,40})\s+(\d+)\s+([\d,]+\.\d{2})\s+([\d,]+\.\d{2})$/;
+  const itemLineRegex = /^([a-zA-Z0-9\s&.,'()-]{3,50})\s+(\d+)\s+([\d,]+\.\d{2})\s+([\d,]+\.\d{2})$/;
 
   for (const line of cleanLines) {
     const match = line.match(itemLineRegex);
@@ -308,7 +295,7 @@ const parseBillText = (text) => {
       const rate = parseFloat(match[3].replace(/,/g, ''));
       const lineTot = parseFloat(match[4].replace(/,/g, ''));
 
-      if (desc && !['subtotal', 'total', 'tax', 'discount'].includes(desc.toLowerCase())) {
+      if (desc && !['subtotal', 'total', 'tax', 'discount', 'gst', 'item description'].includes(desc.toLowerCase())) {
         items.push({
           description: desc,
           quantity: qty > 0 ? qty : 1,
@@ -319,10 +306,8 @@ const parseBillText = (text) => {
     }
   }
 
-  // If no structured item table rows matched, provide a default clean line item from total
   if (items.length === 0) {
     let mainItemDesc = 'General Inventory / Accounting Item';
-    // Try to find a descriptive product or service line
     for (const line of cleanLines.slice(2, 10)) {
       if (
         line.length > 4 &&
@@ -403,21 +388,22 @@ const parseBillText = (text) => {
       date: invoiceDate ? 95 : 60,
       invoiceNumber: invoiceNumber ? 90 : 50,
     },
-    rawText: text,
+    rawText: cleanRawText,
   };
 };
 
 /**
  * Process image file and extract data using Tesseract OCR
  * @param {string} imagePath - Path to the image
+ * @param {string} fallbackInvoiceNo - Optional sequential fallback invoice number
  */
-const processBillImage = async (imagePath) => {
+const processBillImage = async (imagePath, fallbackInvoiceNo = null) => {
   try {
     const { data: { text } } = await Tesseract.recognize(imagePath, 'eng', {
-      logger: () => {}, // suppress verbosity in prod
+      logger: () => {},
     });
 
-    const parsed = parseBillText(text);
+    const parsed = parseBillText(text, fallbackInvoiceNo);
     return parsed;
   } catch (error) {
     console.error('[OCR Service Error]', error);

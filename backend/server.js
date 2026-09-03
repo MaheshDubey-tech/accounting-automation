@@ -84,9 +84,10 @@ app.post('/api/payments', authenticateToken, paymentCtrl.createPayment);
 app.put('/api/payments/:id', authenticateToken, paymentCtrl.updatePayment);
 app.delete('/api/payments/:id', authenticateToken, paymentCtrl.deletePayment);
 
-// 7. OCR Bill Scanning Route (Protected)
+// 7. OCR & Universal Document Scanning Routes (Protected)
 app.post('/api/ocr/scan', authenticateToken, ocrCtrl.upload.single('bill_image'), ocrCtrl.scanBillImage);
 app.post('/api/ocr/confirm', authenticateToken, ocrCtrl.confirmExtractedBill);
+app.post('/api/ocr/confirm-batch', authenticateToken, ocrCtrl.confirmBatchImport);
 
 // 8. Reports & Excel Export Routes (Protected)
 app.get('/api/reports/stats', authenticateToken, reportCtrl.getDashboardStats);

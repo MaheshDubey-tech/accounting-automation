@@ -50,6 +50,16 @@
   color: #ffffff;
 }
 
+.btn--danger-outline {
+  background-color: transparent;
+  color: var(--danger);
+  border: 1.5px solid var(--danger);
+}
+.btn--danger-outline:hover:not(:disabled) {
+  background-color: var(--danger);
+  color: #ffffff;
+}
+
 .btn--success {
   background-color: var(--success);
   color: #ffffff;
