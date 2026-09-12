@@ -9,14 +9,10 @@ const getAllCustomers = async (req, res, next) => {
     const result = await query(`
       SELECT 
         c.*,
-        COUNT(DISTINCT s.id) AS total_sales_count,
-        COALESCE(SUM(inv.amount), 0) AS total_invoiced_amount,
-        COALESCE(SUM(p.amount_paid), 0) AS total_paid_amount
+        (SELECT COUNT(*) FROM sales s WHERE s.customer_id = c.id) AS total_sales_count,
+        (SELECT COALESCE(SUM(inv.amount), 0) FROM invoices inv WHERE inv.customer_id = c.id) AS total_invoiced_amount,
+        (SELECT COALESCE(SUM(p.amount_paid), 0) FROM payments p JOIN invoices inv ON p.invoice_id = inv.id WHERE inv.customer_id = c.id) AS total_paid_amount
       FROM customers c
-      LEFT JOIN sales s ON s.customer_id = c.id
-      LEFT JOIN invoices inv ON inv.customer_id = c.id
-      LEFT JOIN payments p ON p.invoice_id = inv.id
-      GROUP BY c.id
       ORDER BY c.name ASC;
     `);
 
@@ -70,6 +66,9 @@ const createCustomer = async (req, res, next) => {
        RETURNING *;`,
       [name.trim(), contact_info ? contact_info.trim() : null, validTerms]
     );
+
+    // Sync sequence in background
+    syncSequences().catch((e) => console.warn('Customer sequence sync:', e.message));
 
     // Regenerate Excel sheets in background
     regenerateExcelReports().catch((e) => console.error('Excel sync error:', e));

@@ -1178,17 +1178,31 @@ const App = (() => {
   // ==========================================
   // MULTI-ROW SPREADSHEET BATCH IMPORT METHODS
   // ==========================================
-  const renderBatchTable = (items, importType, fileName) => {
+  // MULTI-ROW SPREADSHEET BATCH IMPORT METHODS
+  // ==========================================
+  const renderBatchTable = (items, importType = 'stock', fileName = '') => {
     const thead = document.getElementById('batchTableHead');
     const tbody = document.getElementById('batchTableBody');
     const badge = document.getElementById('batchTypeBadge');
     const title = document.getElementById('batchTitle');
     const summary = document.getElementById('batchSummaryText');
     const countEl = document.getElementById('batchRowCount');
+    const targetSelect = document.getElementById('batchTargetSelect');
 
-    badge.textContent = importType === 'stock' ? 'Stock Spreadsheet' : (importType === 'customers' ? 'Customer Directory' : 'Spreadsheet Batch');
+    if (targetSelect) {
+      targetSelect.value = importType;
+    }
+
+    const labels = {
+      stock: 'Stock / Inventory',
+      customers: 'Customers Directory',
+      sales: 'Sales Transactions',
+      invoices: 'Invoices Billing',
+    };
+
+    badge.textContent = labels[importType] || 'Spreadsheet Batch';
     title.textContent = `Review & Confirm Import from "${fileName || 'Spreadsheet'}"`;
-    summary.textContent = `Extracted ${items.length} records. Edit any cell before saving to accounting ledger.`;
+    summary.textContent = `Extracted ${items.length} records as ${labels[importType] || 'records'}. Edit any cell before saving to accounting ledger.`;
     countEl.textContent = `${items.length} records ready to import`;
 
     if (importType === 'stock') {
@@ -1225,7 +1239,61 @@ const App = (() => {
           <td style="text-align: center;"><button type="button" class="btn btn--icon btn--sm" style="color: var(--danger); border: none;" onclick="App.removeBatchRow(this);">✕</button></td>
         </tr>
       `).join('');
+    } else if (importType === 'sales') {
+      thead.innerHTML = `
+        <tr>
+          <th style="width: 25%;">Customer Name</th>
+          <th style="width: 25%;">Item / Product</th>
+          <th style="width: 15%;">Units</th>
+          <th style="width: 15%;">Rate (₹)</th>
+          <th style="width: 15%;">Sale Date</th>
+          <th style="width: 5%;"></th>
+        </tr>
+      `;
+      tbody.innerHTML = items.map((s, i) => `
+        <tr data-batch-index="${i}">
+          <td><input type="text" class="form-control batch-sale-cust" value="${escapeHtml(s.customer_name || s.customer || 'General Customer')}" required></td>
+          <td><input type="text" class="form-control batch-sale-item" value="${escapeHtml(s.item_name || s.item || 'Item ' + (i + 1))}" required></td>
+          <td><input type="number" class="form-control batch-sale-units" value="${s.units_sold || s.qty || 1}" min="1" required></td>
+          <td><input type="number" class="form-control batch-sale-rate" value="${parseFloat(s.rate || s.price || 100).toFixed(2)}" step="0.01" min="0" required></td>
+          <td><input type="date" class="form-control batch-sale-date" value="${s.sale_date || getTodayDateStr()}"></td>
+          <td style="text-align: center;"><button type="button" class="btn btn--icon btn--sm" style="color: var(--danger); border: none;" onclick="App.removeBatchRow(this);">✕</button></td>
+        </tr>
+      `).join('');
+    } else if (importType === 'invoices') {
+      thead.innerHTML = `
+        <tr>
+          <th style="width: 30%;">Customer Name</th>
+          <th style="width: 20%;">Invoice #</th>
+          <th style="width: 20%;">Amount (₹)</th>
+          <th style="width: 15%;">Due Date</th>
+          <th style="width: 10%;">Status</th>
+          <th style="width: 5%;"></th>
+        </tr>
+      `;
+      tbody.innerHTML = items.map((inv, i) => `
+        <tr data-batch-index="${i}">
+          <td><input type="text" class="form-control batch-inv-cust" value="${escapeHtml(inv.customer_name || inv.customer || 'General Customer')}" required></td>
+          <td><input type="text" class="form-control batch-inv-num" value="${escapeHtml(inv.invoice_number || 'INV-' + (i + 1))}" required></td>
+          <td><input type="number" class="form-control batch-inv-amount" value="${parseFloat(inv.amount || inv.total || 1000).toFixed(2)}" step="0.01" min="0" required></td>
+          <td><input type="date" class="form-control batch-inv-due" value="${inv.due_date || getTodayDateStr()}"></td>
+          <td>
+            <select class="form-control batch-inv-status">
+              <option value="pending" ${inv.status === 'pending' ? 'selected' : ''}>Pending</option>
+              <option value="paid" ${inv.status === 'paid' ? 'selected' : ''}>Paid</option>
+              <option value="overdue" ${inv.status === 'overdue' ? 'selected' : ''}>Overdue</option>
+            </select>
+          </td>
+          <td style="text-align: center;"><button type="button" class="btn btn--icon btn--sm" style="color: var(--danger); border: none;" onclick="App.removeBatchRow(this);">✕</button></td>
+        </tr>
+      `).join('');
     }
+  };
+
+  const changeBatchTarget = (newTarget) => {
+    if (!state.currentBatchData) return;
+    state.currentBatchData.importType = newTarget;
+    renderBatchTable(state.currentBatchData.items || [], newTarget, state.currentBatchData.fileName || '');
   };
 
   const addBatchRow = () => {
@@ -1240,11 +1308,35 @@ const App = (() => {
         <td><input type="number" class="form-control batch-price" value="0.00" step="0.01" min="0" required></td>
         <td style="text-align: center;"><button type="button" class="btn btn--icon btn--sm" style="color: var(--danger); border: none;" onclick="App.removeBatchRow(this);">✕</button></td>
       `;
-    } else {
+    } else if (importType === 'customers') {
       tr.innerHTML = `
         <td><input type="text" class="form-control batch-name" value="New Customer" required></td>
         <td><input type="text" class="form-control batch-contact" value="" placeholder="Phone / Email"></td>
         <td><input type="number" class="form-control batch-terms" value="30" min="0" required></td>
+        <td style="text-align: center;"><button type="button" class="btn btn--icon btn--sm" style="color: var(--danger); border: none;" onclick="App.removeBatchRow(this);">✕</button></td>
+      `;
+    } else if (importType === 'sales') {
+      tr.innerHTML = `
+        <td><input type="text" class="form-control batch-sale-cust" value="General Customer" required></td>
+        <td><input type="text" class="form-control batch-sale-item" value="New Product" required></td>
+        <td><input type="number" class="form-control batch-sale-units" value="1" min="1" required></td>
+        <td><input type="number" class="form-control batch-sale-rate" value="500.00" step="0.01" min="0" required></td>
+        <td><input type="date" class="form-control batch-sale-date" value="${getTodayDateStr()}"></td>
+        <td style="text-align: center;"><button type="button" class="btn btn--icon btn--sm" style="color: var(--danger); border: none;" onclick="App.removeBatchRow(this);">✕</button></td>
+      `;
+    } else if (importType === 'invoices') {
+      tr.innerHTML = `
+        <td><input type="text" class="form-control batch-inv-cust" value="General Customer" required></td>
+        <td><input type="text" class="form-control batch-inv-num" value="INV-NEW" required></td>
+        <td><input type="number" class="form-control batch-inv-amount" value="1500.00" step="0.01" min="0" required></td>
+        <td><input type="date" class="form-control batch-inv-due" value="${getTodayDateStr()}"></td>
+        <td>
+          <select class="form-control batch-inv-status">
+            <option value="pending" selected>Pending</option>
+            <option value="paid">Paid</option>
+            <option value="overdue">Overdue</option>
+          </select>
+        </td>
         <td style="text-align: center;"><button type="button" class="btn btn--icon btn--sm" style="color: var(--danger); border: none;" onclick="App.removeBatchRow(this);">✕</button></td>
       `;
     }
@@ -1265,21 +1357,63 @@ const App = (() => {
 
   const submitBatchImport = async () => {
     if (!state.currentBatchData) return;
-    const importType = state.currentBatchData.importType || 'stock';
+    const targetSelect = document.getElementById('batchTargetSelect');
+    const importType = targetSelect ? targetSelect.value : (state.currentBatchData.importType || 'stock');
     const rows = document.querySelectorAll('#batchTableBody tr');
     const items = [];
 
     rows.forEach((row) => {
-      const name = row.querySelector('.batch-name').value.trim();
-      if (name) {
-        if (importType === 'stock') {
-          const qty = parseInt(row.querySelector('.batch-qty').value, 10) || 0;
-          const price = parseFloat(row.querySelector('.batch-price').value) || 0;
-          items.push({ name, quantity_available: qty, unit_price: price });
-        } else {
-          const contact = row.querySelector('.batch-contact').value.trim();
-          const terms = parseInt(row.querySelector('.batch-terms').value, 10) || 30;
-          items.push({ name, contact_info: contact, billing_terms: terms });
+      if (importType === 'stock') {
+        const nameEl = row.querySelector('.batch-name');
+        const qtyEl = row.querySelector('.batch-qty');
+        const priceEl = row.querySelector('.batch-price');
+        if (nameEl && nameEl.value.trim()) {
+          items.push({
+            name: nameEl.value.trim(),
+            quantity_available: parseInt(qtyEl?.value, 10) || 0,
+            unit_price: parseFloat(priceEl?.value) || 0,
+          });
+        }
+      } else if (importType === 'customers') {
+        const nameEl = row.querySelector('.batch-name');
+        const contactEl = row.querySelector('.batch-contact');
+        const termsEl = row.querySelector('.batch-terms');
+        if (nameEl && nameEl.value.trim()) {
+          items.push({
+            name: nameEl.value.trim(),
+            contact_info: contactEl ? contactEl.value.trim() : '',
+            billing_terms: parseInt(termsEl?.value, 10) || 30,
+          });
+        }
+      } else if (importType === 'sales') {
+        const custEl = row.querySelector('.batch-sale-cust');
+        const itemEl = row.querySelector('.batch-sale-item');
+        const unitsEl = row.querySelector('.batch-sale-units');
+        const rateEl = row.querySelector('.batch-sale-rate');
+        const dateEl = row.querySelector('.batch-sale-date');
+        if (custEl && itemEl && custEl.value.trim() && itemEl.value.trim()) {
+          items.push({
+            customer_name: custEl.value.trim(),
+            item_name: itemEl.value.trim(),
+            units_sold: parseInt(unitsEl?.value, 10) || 1,
+            rate: parseFloat(rateEl?.value) || 0,
+            sale_date: dateEl ? dateEl.value : getTodayDateStr(),
+          });
+        }
+      } else if (importType === 'invoices') {
+        const custEl = row.querySelector('.batch-inv-cust');
+        const numEl = row.querySelector('.batch-inv-num');
+        const amtEl = row.querySelector('.batch-inv-amount');
+        const dueEl = row.querySelector('.batch-inv-due');
+        const statusEl = row.querySelector('.batch-inv-status');
+        if (custEl && custEl.value.trim()) {
+          items.push({
+            customer_name: custEl.value.trim(),
+            invoice_number: numEl ? numEl.value.trim() : 'INV-NEW',
+            amount: parseFloat(amtEl?.value) || 0,
+            due_date: dueEl ? dueEl.value : getTodayDateStr(),
+            status: statusEl ? statusEl.value : 'pending',
+          });
         }
       }
     });
@@ -1302,7 +1436,14 @@ const App = (() => {
       Toast.success(res.message || `Successfully imported ${items.length} records!`);
       resetOCRView();
       await refreshAllData();
-      navigateTo(importType === 'stock' ? 'stock' : 'customers');
+
+      const navDestinations = {
+        stock: 'stock',
+        customers: 'customers',
+        sales: 'sales',
+        invoices: 'invoices',
+      };
+      navigateTo(navDestinations[importType] || 'dashboard');
     } catch (err) {
       Toast.error('Batch import failed: ' + err.message);
     } finally {
@@ -1469,6 +1610,55 @@ const App = (() => {
       document.getElementById('ocrReviewGrid').style.display = 'none';
       renderBatchTable(sampleCusts, 'customers', 'Customer_Directory_Q3.csv');
       Toast.info('Sample CSV Customer Directory parsed! Review table and click Confirm.');
+      return;
+    }
+
+    if (type === 'sales_sheet') {
+      // Simulate instant Excel Sales Transactions ledger parsing
+      const sampleSales = [
+        { customer_name: 'Tata Consultancy Services', item_name: 'MacBook Pro M3 Max (16GB, 512GB)', units_sold: 2, rate: 199900.00, total: 399800.00, sale_date: getTodayDateStr() },
+        { customer_name: 'Infosys Enterprise Solutions', item_name: 'Dell UltraSharp 4K Monitor 27"', units_sold: 5, rate: 34500.00, total: 172500.00, sale_date: getTodayDateStr() },
+        { customer_name: 'Wipro Digital Services', item_name: 'Logitech MX Master 3S Wireless Mouse', units_sold: 10, rate: 8495.00, total: 84950.00, sale_date: getTodayDateStr() },
+        { customer_name: 'HCL Technologies Ltd', item_name: 'Keychron Q1 Pro Mechanical Keyboard', units_sold: 4, rate: 14500.00, total: 58000.00, sale_date: getTodayDateStr() },
+      ];
+
+      state.currentBatchData = {
+        importType: 'sales',
+        items: sampleSales,
+        fileName: 'Sales_Ledger_Q3.xlsx',
+      };
+
+      document.getElementById('ocrBatchGrid').style.display = 'block';
+      document.getElementById('ocrReviewGrid').style.display = 'none';
+      renderBatchTable(sampleSales, 'sales', 'Sales_Ledger_Q3.xlsx');
+      Toast.info('Sample Sales Transactions Ledger parsed! Review table and click Confirm.');
+      return;
+    }
+
+    if (type === 'invoices_sheet') {
+      // Simulate instant Invoices Billing spreadsheet parsing
+      const today = new Date();
+      const in15Days = new Date(today.getTime() + 15 * 86400000).toISOString().split('T')[0];
+      const in30Days = new Date(today.getTime() + 30 * 86400000).toISOString().split('T')[0];
+      const pastDue = new Date(today.getTime() - 5 * 86400000).toISOString().split('T')[0];
+
+      const sampleInvoices = [
+        { customer_name: 'Tata Consultancy Services', invoice_number: 'INV-2026-001', amount: 399800.00, due_date: in15Days, status: 'pending' },
+        { customer_name: 'Infosys Enterprise Solutions', invoice_number: 'INV-2026-002', amount: 172500.00, due_date: in30Days, status: 'pending' },
+        { customer_name: 'Wipro Digital Services', invoice_number: 'INV-2026-003', amount: 84950.00, due_date: pastDue, status: 'overdue' },
+        { customer_name: 'HCL Technologies Ltd', invoice_number: 'INV-2026-004', amount: 58000.00, due_date: pastDue, status: 'paid' },
+      ];
+
+      state.currentBatchData = {
+        importType: 'invoices',
+        items: sampleInvoices,
+        fileName: 'Invoices_Billing_Report.xlsx',
+      };
+
+      document.getElementById('ocrBatchGrid').style.display = 'block';
+      document.getElementById('ocrReviewGrid').style.display = 'none';
+      renderBatchTable(sampleInvoices, 'invoices', 'Invoices_Billing_Report.xlsx');
+      Toast.info('Sample Invoices Billing Spreadsheet parsed! Review table and click Confirm.');
       return;
     }
 
@@ -1984,7 +2174,7 @@ const App = (() => {
     if (themeBtn) {
       themeBtn.addEventListener('click', () => {
         const html = document.documentElement;
-        const current = html.getAttribute('data-theme') || 'dark';
+        const current = html.getAttribute('data-theme') || 'light';
         const next = current === 'dark' ? 'light' : 'dark';
         html.setAttribute('data-theme', next);
         localStorage.setItem('accounting_theme', next);
@@ -1994,6 +2184,8 @@ const App = (() => {
     const savedTheme = localStorage.getItem('accounting_theme');
     if (savedTheme) {
       document.documentElement.setAttribute('data-theme', savedTheme);
+    } else {
+      document.documentElement.setAttribute('data-theme', 'light');
     }
 
     // 12. Initialize AI OCR Scanner
@@ -2036,6 +2228,10 @@ const App = (() => {
     setQuickDueDate,
     setScanDocType,
     resetOCRView,
+    addBatchRow,
+    removeBatchRow,
+    changeBatchTarget,
+    submitBatchImport,
     syncExcel,
     downloadLifetimeExcel,
     downloadMonthlyExcel,

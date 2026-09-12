@@ -387,6 +387,110 @@ const confirmBatchImport = async (req, res, next) => {
             }
           }
         }
+      } else if (importType === 'sales') {
+        for (const s of items) {
+          const custName = String(s.customer_name || s.customer || 'General Customer').trim();
+          const itemName = String(s.item_name || s.description || s.name || 'General Product').trim();
+          const units = Math.max(1, parseInt(s.units_sold || s.qty || s.quantity, 10) || 1);
+          let unitRate = parseFloat(s.rate || s.price || s.unit_price) || 0;
+          const totalAmt = parseFloat(s.total || s.total_amount || s.amount) || (units * unitRate);
+          if (unitRate === 0 && totalAmt > 0) unitRate = parseFloat((totalAmt / units).toFixed(2));
+          const saleDate = s.sale_date || s.date || new Date().toISOString().split('T')[0];
+
+          // 1. Find or create Customer
+          let customer;
+          const custCheck = await client.query('SELECT * FROM customers WHERE LOWER(name) = LOWER($1)', [custName]);
+          if (custCheck.rows.length > 0) {
+            customer = custCheck.rows[0];
+          } else {
+            const newCust = await client.query(
+              'INSERT INTO customers (name, billing_terms) VALUES ($1, 30) RETURNING *',
+              [custName]
+            );
+            customer = newCust.rows[0];
+          }
+
+          // 2. Find or create Stock item
+          let stockItem;
+          const itemCheck = await client.query('SELECT * FROM stock_items WHERE LOWER(name) = LOWER($1)', [itemName]);
+          if (itemCheck.rows.length > 0) {
+            stockItem = itemCheck.rows[0];
+            if (stockItem.quantity_available < units) {
+              await client.query('UPDATE stock_items SET quantity_available = quantity_available + $1 WHERE id = $2', [
+                units + 50,
+                stockItem.id,
+              ]);
+            }
+          } else {
+            const newItem = await client.query(
+              'INSERT INTO stock_items (name, unit_price, quantity_available) VALUES ($1, $2, $3) RETURNING *',
+              [itemName, unitRate, units + 100]
+            );
+            stockItem = newItem.rows[0];
+          }
+
+          // Deduct stock
+          await client.query('UPDATE stock_items SET quantity_available = quantity_available - $1 WHERE id = $2', [
+            units,
+            stockItem.id,
+          ]);
+
+          // Insert Sale
+          const saleRes = await client.query(
+            `INSERT INTO sales (customer_id, item_id, units_sold, rate, sale_date)
+             VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+            [customer.id, stockItem.id, units, unitRate, saleDate]
+          );
+          const newSale = saleRes.rows[0];
+
+          // Auto-generate linked invoice
+          const invDueDate = new Date(new Date(saleDate).getTime() + (customer.billing_terms || 30) * 86400000).toISOString().split('T')[0];
+          const invRes = await client.query(
+            `INSERT INTO invoices (sale_id, customer_id, amount, due_date, status)
+             VALUES ($1, $2, $3, $4, 'pending') RETURNING *`,
+            [newSale.id, customer.id, totalAmt, invDueDate]
+          );
+
+          created.push({ sale: newSale, invoice: invRes.rows[0] });
+        }
+      } else if (importType === 'invoices') {
+        for (const inv of items) {
+          const custName = String(inv.customer_name || inv.customer || 'General Customer').trim();
+          const amount = parseFloat(inv.amount || inv.total || 0) || 0;
+          const dueDate = inv.due_date || new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0];
+          const rawStatus = String(inv.status || 'pending').toLowerCase();
+          const status = ['pending', 'paid', 'overdue'].includes(rawStatus) ? rawStatus : (dueDate < new Date().toISOString().split('T')[0] ? 'overdue' : 'pending');
+
+          // Find or create Customer
+          let customer;
+          const custCheck = await client.query('SELECT * FROM customers WHERE LOWER(name) = LOWER($1)', [custName]);
+          if (custCheck.rows.length > 0) {
+            customer = custCheck.rows[0];
+          } else {
+            const newCust = await client.query(
+              'INSERT INTO customers (name, billing_terms) VALUES ($1, 30) RETURNING *',
+              [custName]
+            );
+            customer = newCust.rows[0];
+          }
+
+          const invRes = await client.query(
+            `INSERT INTO invoices (customer_id, amount, due_date, status)
+             VALUES ($1, $2, $3, $4) RETURNING *`,
+            [customer.id, amount, dueDate, status]
+          );
+          const newInvoice = invRes.rows[0];
+
+          if (status === 'paid') {
+            await client.query(
+              `INSERT INTO payments (invoice_id, amount_paid, payment_date, mode, notes)
+               VALUES ($1, $2, CURRENT_DATE, 'Bank Transfer', 'Imported via Batch Spreadsheet')`,
+              [newInvoice.id, amount]
+            );
+          }
+
+          created.push(newInvoice);
+        }
       }
 
       await syncSequences(client);

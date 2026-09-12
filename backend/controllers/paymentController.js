@@ -1,4 +1,4 @@
-const { query, withTransaction } = require('../config/db');
+const { query, withTransaction, syncSequences } = require('../config/db');
 const { regenerateExcelReports } = require('../services/excelService');
 
 /**
@@ -142,6 +142,8 @@ const createPayment = async (req, res, next) => {
         [newStatus, invoiceId]
       );
 
+      await syncSequences(client);
+
       return {
         payment: newPayment,
         invoice: updatedInvRes.rows[0],
@@ -218,6 +220,8 @@ const updatePayment = async (req, res, next) => {
 
       await client.query('UPDATE invoices SET status = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2', [newStatus, invoice.id]);
 
+      await syncSequences(client);
+
       return updatedPayRes.rows[0];
     });
 
@@ -272,6 +276,8 @@ const deletePayment = async (req, res, next) => {
         }
         await client.query('UPDATE invoices SET status = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2', [newStatus, invoice.id]);
       }
+
+      await syncSequences(client);
 
       return payment;
     });

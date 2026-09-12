@@ -1,4 +1,4 @@
-const { query, withTransaction } = require('../config/db');
+const { query, withTransaction, syncSequences } = require('../config/db');
 const { regenerateExcelReports } = require('../services/excelService');
 
 /**
@@ -146,6 +146,8 @@ const createSale = async (req, res, next) => {
       );
       const newInvoice = invoiceInsertRes.rows[0];
 
+      await syncSequences(client);
+
       return {
         sale: newSale,
         invoice: newInvoice,
@@ -181,7 +183,6 @@ const updateSale = async (req, res, next) => {
     const itemId = parseInt(item_id, 10);
     const units = parseInt(units_sold, 10);
     const unitRate = parseFloat(rate);
-    const saleDateStr = sale_date;
 
     if (isNaN(customerId) || isNaN(itemId) || isNaN(units) || isNaN(unitRate)) {
       return res.status(400).json({
@@ -199,6 +200,7 @@ const updateSale = async (req, res, next) => {
         throw new Error('Sale record not found.');
       }
       const oldSale = oldSaleRes.rows[0];
+      const saleDateStr = sale_date && String(sale_date).trim() !== '' ? sale_date : (oldSale.sale_date ? new Date(oldSale.sale_date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]);
 
       // Customer terms
       const custRes = await client.query('SELECT * FROM customers WHERE id = $1', [customerId]);
@@ -302,6 +304,8 @@ const deleteSale = async (req, res, next) => {
 
       // Delete sale
       await client.query('DELETE FROM sales WHERE id = $1', [id]);
+
+      await syncSequences(client);
 
       return sale;
     });

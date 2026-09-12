@@ -78,8 +78,8 @@
 
 /* Notice Banner */
 .notice-alert-banner {
-  background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(239, 68, 68, 0.1));
-  border: 1px solid var(--warning-border);
+  background: #fffbeb;
+  border: 1px solid #fde68a;
   border-radius: var(--radius-lg);
   padding: 1rem 1.25rem;
   margin-bottom: 1.5rem;
@@ -87,6 +87,11 @@
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
+}
+
+[data-theme="dark"] .notice-alert-banner {
+  background: rgba(245, 158, 11, 0.12);
+  border-color: rgba(245, 158, 11, 0.3);
 }
 
 .notice-alert-banner__content {
@@ -110,11 +115,19 @@
 .notice-alert-banner__title {
   font-weight: 700;
   font-size: 0.95rem;
+  color: #92400e;
+}
+
+[data-theme="dark"] .notice-alert-banner__title {
   color: var(--text-primary);
 }
 
 .notice-alert-banner__desc {
   font-size: 0.825rem;
+  color: #b45309;
+}
+
+[data-theme="dark"] .notice-alert-banner__desc {
   color: var(--text-secondary);
 }
 
@@ -144,14 +157,19 @@
   border-radius: var(--radius-md);
   font-size: 0.85rem;
   font-weight: 600;
-  background: var(--bg-surface-elevated);
+  background: var(--bg-surface);
   border: 1px solid var(--border-color);
-  color: var(--text-primary);
+  color: var(--text-secondary);
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
-.ocr-mode-btn:hover, .ocr-mode-btn.active {
+.ocr-mode-btn:hover {
+  background: var(--bg-surface-hover);
+  color: var(--text-primary);
+}
+
+.ocr-mode-btn.active {
   background: var(--primary);
   color: #fff;
   border-color: var(--primary);
@@ -175,20 +193,28 @@
 
 .ocr-dropzone:hover, .ocr-dropzone.dragover {
   border-color: var(--primary);
-  background-color: rgba(37, 99, 235, 0.06);
-  box-shadow: 0 0 20px rgba(37, 99, 235, 0.15);
+  background-color: #f8fafc;
+  box-shadow: 0 0 20px rgba(37, 99, 235, 0.08);
+}
+
+[data-theme="dark"] .ocr-dropzone:hover, [data-theme="dark"] .ocr-dropzone.dragover {
+  background-color: rgba(37, 99, 235, 0.08);
 }
 
 .ocr-dropzone__icon {
   width: 64px;
   height: 64px;
   border-radius: var(--radius-full);
-  background-color: var(--bg-surface-elevated);
+  background-color: #eff6ff;
   display: flex;
   align-items: center;
   justify-content: center;
   color: var(--primary);
   box-shadow: var(--shadow-sm);
+}
+
+[data-theme="dark"] .ocr-dropzone__icon {
+  background-color: rgba(37, 99, 235, 0.2);
 }
 
 .ocr-samples-bar {
@@ -202,7 +228,7 @@
 
 .sample-chip {
   padding: 0.35rem 0.75rem;
-  background: var(--bg-surface-elevated);
+  background: var(--bg-surface);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-full);
   font-size: 0.75rem;
@@ -220,7 +246,7 @@
 
 /* Scanner Processing Bar */
 .ocr-progress-box {
-  background: var(--bg-surface-elevated);
+  background: var(--bg-surface);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-lg);
   padding: 1.5rem;
@@ -306,7 +332,7 @@
 
 .ocr-image-container {
   position: relative;
-  background: #090d16;
+  background: var(--bg-surface-elevated);
   border-radius: var(--radius-md);
   border: 1px solid var(--border-color);
   min-height: 380px;
@@ -315,6 +341,10 @@
   align-items: center;
   justify-content: center;
   overflow: hidden;
+}
+
+[data-theme="dark"] .ocr-image-container {
+  background: #0f172a;
 }
 
 .ocr-image-preview {
@@ -339,9 +369,9 @@
   border-radius: var(--radius-full);
   font-size: 0.75rem;
   font-weight: 700;
-  background: rgba(16, 185, 129, 0.15);
-  color: #10b981;
-  border: 1px solid rgba(16, 185, 129, 0.3);
+  background: var(--success-bg);
+  color: var(--success-text, var(--success));
+  border: 1px solid var(--success-border);
 }
 
 .ocr-form-panel {
@@ -374,8 +404,9 @@
 }
 
 .doc-type-opt.active {
-  background: var(--primary);
-  color: #fff;
+  background: var(--bg-surface);
+  color: var(--primary);
+  border: 1px solid var(--border-color);
   box-shadow: var(--shadow-sm);
 }
 
@@ -400,13 +431,14 @@
 .line-items-table td {
   padding: 0.4rem 0.5rem;
   border-bottom: 1px solid var(--border-color);
+  background: var(--bg-surface);
 }
 
 .line-items-table input {
   width: 100%;
   padding: 0.45rem 0.6rem;
-  background: var(--bg-surface-elevated);
-  border: 1px solid var(--border-color);
+  background: var(--bg-input, var(--bg-surface));
+  border: 1px solid var(--border-input, var(--border-color));
   border-radius: var(--radius-sm);
   color: var(--text-primary);
   font-size: 0.85rem;
@@ -418,7 +450,7 @@
 }
 
 .financial-summary-card {
-  background: var(--bg-surface-elevated);
+  background: var(--bg-surface);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
   padding: 1rem;
@@ -426,6 +458,7 @@
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  box-shadow: var(--shadow-sm);
 }
 
 .summary-row {
@@ -452,7 +485,7 @@
 
 .term-pill {
   padding: 0.2rem 0.5rem;
-  background: var(--bg-surface-elevated);
+  background: var(--bg-surface);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-sm);
   font-size: 0.7rem;
@@ -472,7 +505,8 @@
   position: relative;
   width: 100%;
   height: 380px;
-  background: #000;
+  background: #0f172a;
+  border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
   overflow: hidden;
   display: flex;
@@ -626,10 +660,11 @@
   align-items: center;
   justify-content: space-between;
   padding: 1.25rem;
-  background: var(--bg-surface-elevated);
+  background: var(--bg-surface);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
   margin-bottom: 1rem;
+  box-shadow: var(--shadow-sm);
 }
 
 .download-card__info h4 {
@@ -666,8 +701,8 @@
 #batchDataTable input.form-control {
   padding: 0.35rem 0.6rem;
   font-size: 0.85rem;
-  background: var(--bg-surface);
-  border: 1px solid var(--border-color);
+  background: var(--bg-input, var(--bg-surface));
+  border: 1px solid var(--border-input, var(--border-color));
   border-radius: var(--radius-sm);
   color: var(--text-primary);
   width: 100%;
@@ -679,7 +714,7 @@
 }
 
 #ocrTextFallbackPreview {
-  background: var(--bg-surface-elevated);
+  background: var(--bg-surface);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;

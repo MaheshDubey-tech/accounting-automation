@@ -1,20 +1,52 @@
 const { Pool } = require('pg');
 require('dotenv').config();
 
-const pool = new Pool({
-  host: process.env.DB_HOST || 'localhost',
-  port: parseInt(process.env.DB_PORT || '5432', 10),
-  database: process.env.DB_NAME || 'ssa_accounting',
-  user: process.env.DB_USER || process.env.USER,
-  password: process.env.DB_PASSWORD || undefined,
-  max: 20,
-  idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 5000,
-});
+const poolConfig = process.env.DATABASE_URL
+  ? {
+      connectionString: process.env.DATABASE_URL,
+      ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+      max: 20,
+      idleTimeoutMillis: 30000,
+      connectionTimeoutMillis: 10000,
+    }
+  : {
+      host: process.env.DB_HOST || 'localhost',
+      port: parseInt(process.env.DB_PORT || '5432', 10),
+      database: process.env.DB_NAME || 'ssa_accounting',
+      user: process.env.DB_USER || process.env.USER,
+      password: process.env.DB_PASSWORD || undefined,
+      max: 20,
+      idleTimeoutMillis: 30000,
+      connectionTimeoutMillis: 5000,
+    };
+
+const pool = new Pool(poolConfig);
 
 pool.on('error', (err) => {
   console.error('Unexpected error on idle PostgreSQL client', err);
 });
+
+// Auto-check and initialize tables if not created yet (for seamless cloud deployment)
+const ensureSchema = async () => {
+  try {
+    const tableCheck = await pool.query(`
+      SELECT 1 FROM information_schema.tables 
+      WHERE table_schema = 'public' AND table_name = 'customers';
+    `);
+    if (tableCheck.rowCount === 0) {
+      console.log('⚡ Initializing database schema for fresh deployment...');
+      const fs = require('fs');
+      const path = require('path');
+      const schemaSql = fs.readFileSync(path.join(__dirname, '../migrations/init_schema.sql'), 'utf-8');
+      await pool.query(schemaSql);
+      console.log('✅ Database schema auto-initialized successfully!');
+    }
+  } catch (e) {
+    console.warn('Schema check:', e.message);
+  }
+};
+
+ensureSchema().catch((e) => console.warn('Auto-schema error:', e.message));
 
 /**
  * Execute a single query
@@ -48,16 +80,17 @@ const withTransaction = async (callback) => {
 
 /**
  * Synchronize PostgreSQL sequences with current MAX(id) in tables
- * If a table is empty, sets sequence to 1 (false) so nextval returns 1
+ * Dynamically resolves sequence names via pg_get_serial_sequence
  */
 const syncSequences = async (clientOrQuery = null) => {
-  const tables = [
-    { table: 'invoices', seq: 'invoices_id_seq' },
-    { table: 'sales', seq: 'sales_id_seq' },
-    { table: 'customers', seq: 'customers_id_seq' },
-    { table: 'stock_items', seq: 'stock_items_id_seq' },
-    { table: 'payments', seq: 'payments_id_seq' },
-    { table: 'reminders_log', seq: 'reminders_log_id_seq' },
+  const tableNames = [
+    'users',
+    'customers',
+    'stock_items',
+    'sales',
+    'invoices',
+    'payments',
+    'reminders_log',
   ];
 
   const exec = async (text, params) => {
@@ -67,20 +100,32 @@ const syncSequences = async (clientOrQuery = null) => {
     return await query(text, params);
   };
 
-  for (const item of tables) {
+  for (const tableName of tableNames) {
     try {
-      const res = await exec(`SELECT COALESCE(MAX(id), 0) AS max_id FROM ${item.table}`);
-      const maxId = parseInt(res.rows[0].max_id, 10);
-      if (maxId === 0) {
-        await exec(`SELECT setval('${item.seq}', 1, false)`);
-      } else {
-        await exec(`SELECT setval('${item.seq}', ${maxId}, true)`);
+      // Find the sequence for the primary key 'id'
+      const seqRes = await exec(
+        "SELECT pg_get_serial_sequence($1, 'id') AS seq_name",
+        [tableName]
+      );
+      const seqName = seqRes.rows[0]?.seq_name || `${tableName}_id_seq`;
+
+      if (seqName) {
+        const maxRes = await exec(`SELECT COALESCE(MAX(id), 0) AS max_id FROM ${tableName}`);
+        const maxId = parseInt(maxRes.rows[0]?.max_id || 0, 10);
+        if (maxId === 0) {
+          await exec(`SELECT setval($1, 1, false)`, [seqName]);
+        } else {
+          await exec(`SELECT setval($1, $2, true)`, [seqName, maxId]);
+        }
       }
     } catch (e) {
-      // ignore table or sequence lookup if not matching
+      // Sequence might not exist yet if table is being created
     }
   }
 };
+
+// Initial background sync check on startup
+syncSequences().catch((e) => console.warn('Initial sequence sync:', e.message));
 
 module.exports = {
   pool,

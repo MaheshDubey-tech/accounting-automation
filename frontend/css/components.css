@@ -31,9 +31,10 @@
 }
 
 .btn--secondary {
-  background-color: var(--bg-surface-elevated);
-  border-color: var(--border-color);
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-color);
   color: var(--text-primary);
+  box-shadow: var(--shadow-sm);
 }
 .btn--secondary:hover:not(:disabled) {
   background-color: var(--bg-surface-hover);
@@ -42,7 +43,7 @@
 
 .btn--danger {
   background-color: var(--danger-bg);
-  color: var(--danger);
+  color: var(--danger-text, var(--danger));
   border-color: var(--danger-border);
 }
 .btn--danger:hover:not(:disabled) {
@@ -52,7 +53,7 @@
 
 .btn--danger-outline {
   background-color: transparent;
-  color: var(--danger);
+  color: var(--danger-text, var(--danger));
   border: 1.5px solid var(--danger);
 }
 .btn--danger-outline:hover:not(:disabled) {
@@ -65,7 +66,7 @@
   color: #ffffff;
 }
 .btn--success:hover:not(:disabled) {
-  background-color: #059669;
+  background-color: #15803d;
 }
 
 .btn--sm {
@@ -77,7 +78,7 @@
 .btn--icon {
   padding: 0.5rem;
   border-radius: var(--radius-sm);
-  background: transparent;
+  background: var(--bg-surface);
   border: 1px solid var(--border-color);
   color: var(--text-secondary);
 }
@@ -103,14 +104,14 @@
 .form-label {
   font-size: 0.825rem;
   font-weight: 600;
-  color: var(--text-secondary);
+  color: var(--text-primary);
 }
 
 .form-control {
   width: 100%;
   padding: 0.65rem 0.9rem;
-  background-color: var(--bg-surface-elevated);
-  border: 1px solid var(--border-color);
+  background-color: var(--bg-input, var(--bg-surface));
+  border: 1px solid var(--border-input, var(--border-color));
   border-radius: var(--radius-md);
   color: var(--text-primary);
   outline: none;
@@ -167,6 +168,7 @@
   gap: 0.5rem;
   position: relative;
   overflow: hidden;
+  box-shadow: var(--shadow-sm);
 }
 
 .kpi-card::before {
@@ -186,7 +188,7 @@
 .kpi-card__label {
   font-size: 0.8rem;
   font-weight: 600;
-  color: var(--text-muted);
+  color: var(--text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
@@ -218,19 +220,19 @@
 
 .badge--paid {
   background-color: var(--success-bg);
-  color: var(--success);
+  color: var(--success-text, var(--success));
   border: 1px solid var(--success-border);
 }
 
 .badge--pending {
   background-color: var(--warning-bg);
-  color: var(--warning);
+  color: var(--warning-text, var(--warning));
   border: 1px solid var(--warning-border);
 }
 
 .badge--overdue {
   background-color: var(--danger-bg);
-  color: var(--danger);
+  color: var(--danger-text, var(--danger));
   border: 1px solid var(--danger-border);
 }
 
@@ -263,13 +265,14 @@
   border-bottom: 1px solid var(--border-color);
   color: var(--text-primary);
   vertical-align: middle;
+  background-color: var(--bg-surface);
 }
 
 .data-table tbody tr:last-child td {
   border-bottom: none;
 }
 
-.data-table tbody tr:hover {
+.data-table tbody tr:hover td {
   background-color: var(--bg-surface-hover);
 }
 
@@ -283,7 +286,7 @@
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background-color: rgba(0, 0, 0, 0.7);
+  background-color: rgba(15, 23, 42, 0.45);
   backdrop-filter: blur(4px);
   z-index: 100;
   display: flex;

@@ -1,0 +1,23 @@
+# Environment configuration
+.env
+.env.local
+.env.*.local
+
+# Dependency directories
+node_modules/
+
+# Temporary and local upload files
+uploads/*
+!uploads/.gitkeep
+
+# System & IDE files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Logs and debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.log

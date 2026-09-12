@@ -1,4 +1,4 @@
-const { query } = require('../config/db');
+const { query, withTransaction, syncSequences } = require('../config/db');
 const { regenerateExcelReports } = require('../services/excelService');
 
 /**
@@ -74,6 +74,7 @@ const createStock = async (req, res, next) => {
       [name.trim(), price, quantity]
     );
 
+    syncSequences().catch((e) => console.warn('Stock sequence sync:', e.message));
     regenerateExcelReports().catch((e) => console.error('Excel sync error:', e));
 
     res.status(201).json({
@@ -171,6 +172,8 @@ const deleteStock = async (req, res, next) => {
 
       // Delete stock item
       await client.query('DELETE FROM stock_items WHERE id = $1', [id]);
+
+      await syncSequences(client);
 
       return item;
     });
