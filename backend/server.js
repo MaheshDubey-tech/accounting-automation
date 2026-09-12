@@ -108,6 +108,11 @@ app.post('/api/cron/run-check', authenticateToken, async (req, res, next) => {
 // Centralized error handler
 app.use(errorHandler);
 
+// Direct redirect from login to main portal (no login barrier)
+app.get(['/login', '/login.html'], (req, res) => {
+  res.redirect('/index.html');
+});
+
 // Wildcard fallback for HTML pages
 app.get('*', (req, res) => {
   // If requesting an html page that exists, send it
