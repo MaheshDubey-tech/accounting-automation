@@ -41,6 +41,19 @@ const ensureSchema = async () => {
       await pool.query(schemaSql);
       console.log('✅ Database schema auto-initialized successfully!');
     }
+
+    // Auto-seed default admin user if users table is empty
+    const userCheck = await pool.query('SELECT COUNT(*) as count FROM users');
+    if (parseInt(userCheck.rows[0].count, 10) === 0) {
+      const bcrypt = require('bcryptjs');
+      const salt = await bcrypt.genSalt(10);
+      const defaultHash = await bcrypt.hash('admin123', salt);
+      await pool.query(
+        'INSERT INTO users (username, password_hash, role) VALUES ($1, $2, $3)',
+        ['admin', defaultHash, 'admin']
+      );
+      console.log('✅ Default admin account auto-created: admin / admin123');
+    }
   } catch (e) {
     console.warn('Schema check:', e.message);
   }
@@ -127,10 +140,25 @@ const syncSequences = async (clientOrQuery = null) => {
 // Initial background sync check on startup
 syncSequences().catch((e) => console.warn('Initial sequence sync:', e.message));
 
+/**
+ * Convert a Date object or ISO date string to YYYY-MM-DD format for API responses.
+ * Uses UTC components to avoid timezone offset issues.
+ */
+const formatDateForAPI = (dateInput) => {
+  if (!dateInput) return null;
+  const d = dateInput instanceof Date ? dateInput : new Date(dateInput);
+  if (isNaN(d.getTime())) return null;
+  const year = d.getUTCFullYear();
+  const month = String(d.getUTCMonth() + 1).padStart(2, '0');
+  const day = String(d.getUTCDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 module.exports = {
   pool,
   query,
   withTransaction,
   syncSequences,
+  formatDateForAPI,
 };
 

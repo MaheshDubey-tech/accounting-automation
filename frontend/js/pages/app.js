@@ -32,7 +32,12 @@ const App = (() => {
 
   const formatDate = (dateStr) => {
     if (!dateStr) return 'N/A';
-    const d = new Date(dateStr);
+    // Handle ISO date strings (YYYY-MM-DD) without timezone shift
+    // Appending T12:00:00 ensures midday parse, avoiding UTC offset date flip
+    const normalized = typeof dateStr === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateStr)
+      ? dateStr + 'T12:00:00'
+      : dateStr;
+    const d = new Date(normalized);
     if (isNaN(d.getTime())) return dateStr;
     return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
   };
@@ -52,6 +57,7 @@ const App = (() => {
 
   const extractData = (res) => {
     if (res && res.data !== undefined) return res.data;
+    if (res && res.success !== undefined) return res;
     return res;
   };
 

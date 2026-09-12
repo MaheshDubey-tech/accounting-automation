@@ -1,4 +1,4 @@
-const { query, withTransaction, syncSequences } = require('../config/db');
+const { query, withTransaction, syncSequences, formatDateForAPI } = require('../config/db');
 const { regenerateExcelReports } = require('../services/excelService');
 
 /**
@@ -84,7 +84,7 @@ const createSale = async (req, res, next) => {
     const itemId = parseInt(item_id, 10);
     const units = parseInt(units_sold, 10);
     const unitRate = parseFloat(rate);
-    const saleDateStr = sale_date || new Date().toISOString().split('T')[0];
+    const saleDateStr = formatDateForAPI(sale_date) || formatDateForAPI(new Date());
 
     if (isNaN(customerId) || isNaN(itemId) || isNaN(units) || isNaN(unitRate)) {
       return res.status(400).json({
